@@ -1569,6 +1569,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   SELECT "posthog_dashboardtile"."id",
          "posthog_dashboardtile"."dashboard_id",
          "posthog_dashboardtile"."insight_id",
@@ -1597,6 +1598,10 @@
 =======
 =======
 >>>>>>> 872674fc250 (chore: gate property level access control behind billing feature)
+=======
+=======
+>>>>>>> 6e0d0345947 (test(backend): update query snapshots)
+>>>>>>> 65046548c4d (test(backend): update query snapshots)
   SELECT "posthog_team"."id",
          "posthog_team"."uuid",
          "posthog_team"."organization_id",
@@ -1702,8 +1707,11 @@
 # name: TestInsight.test_listing_insights_does_not_nplus1.21
   '''
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> 280c551a8ea (test(backend): update query snapshots)
 =======
+=======
+>>>>>>> 65046548c4d (test(backend): update query snapshots)
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -1715,6 +1723,8 @@
   WHERE ("access_control_propertyaccesscontrol"."team_id" = 99999
          AND NOT ("access_control_propertyaccesscontrol"."property_definition_id" IS NULL))
 =======
+=======
+>>>>>>> 6e0d0345947 (test(backend): update query snapshots)
   SELECT "posthog_team"."id",
          "posthog_team"."uuid",
          "posthog_team"."organization_id",
@@ -1840,7 +1850,6 @@
   INNER JOIN "posthog_organization" ON ("posthog_team"."organization_id" = "posthog_organization"."id")
   WHERE "posthog_team"."id" = 99999
   ORDER BY "posthog_team"."id" ASC
->>>>>>> b7ba996af35 (chore: gate property level access control behind billing feature)
   LIMIT 1
 >>>>>>> c7f3e7687ca (fix: consider property restrictions when fetching query results from cache)
   '''
@@ -2863,6 +2872,7 @@
   '''
 # ---
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -2947,6 +2957,8 @@
   '''
 # ---
 >>>>>>> 37cfe041a0b (chore: gate property level access control behind billing feature)
+=======
+>>>>>>> 6e0d0345947 (test(backend): update query snapshots)
 # name: TestInsight.test_listing_insights_does_not_nplus1.4
   '''
   SELECT "ee_accesscontrol"."id",
@@ -2996,11 +3008,14 @@
 # name: TestInsight.test_listing_insights_does_not_nplus1.40
   '''
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
 >>>>>>> dcd50a73047 (fix: consider property restrictions when fetching query results from cache)
 >>>>>>> 37cfe041a0b (chore: gate property level access control behind billing feature)
+=======
+>>>>>>> 6e0d0345947 (test(backend): update query snapshots)
   SELECT "posthog_taggeditem"."id",
          "posthog_taggeditem"."tag_id",
          "posthog_taggeditem"."dashboard_id",
@@ -3023,12 +3038,15 @@
 # name: TestInsight.test_listing_insights_does_not_nplus1.41
   '''
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> 8d36f8f66fc (test(backend): update query snapshots)
 =======
 >>>>>>> b7ba996af35 (chore: gate property level access control behind billing feature)
 >>>>>>> 37cfe041a0b (chore: gate property level access control behind billing feature)
+=======
+>>>>>>> 6e0d0345947 (test(backend): update query snapshots)
   SELECT "posthog_taggeditem"."id",
          "posthog_taggeditem"."tag_id",
          "posthog_taggeditem"."dashboard_id",
@@ -3052,6 +3070,7 @@
                                               5 /* ... */)
   '''
 # ---
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 <<<<<<< HEAD
@@ -3147,6 +3166,8 @@
 =======
 >>>>>>> b7ba996af35 (chore: gate property level access control behind billing feature)
 >>>>>>> 37cfe041a0b (chore: gate property level access control behind billing feature)
+=======
+>>>>>>> 6e0d0345947 (test(backend): update query snapshots)
 # name: TestInsight.test_listing_insights_does_not_nplus1.42
   '''
   SELECT "ee_accesscontrol"."id",
