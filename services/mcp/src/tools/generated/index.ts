@@ -17,6 +17,7 @@ import { GENERATED_TOOLS as docs } from './docs'
 import { GENERATED_TOOLS as early_access_features } from './early_access_features'
 import { GENERATED_TOOLS as endpoints } from './endpoints'
 import { GENERATED_TOOLS as error_tracking } from './error_tracking'
+import { GENERATED_TOOLS as error_tracking_alerts } from './error_tracking_alerts'
 import { GENERATED_TOOLS as experiments } from './experiments'
 import { GENERATED_TOOLS as feature_flags } from './feature_flags'
 import { GENERATED_TOOLS as integrations } from './integrations'
@@ -55,6 +56,7 @@ export const GENERATED_TOOL_MAP: Record<string, () => ToolBase<ZodObjectAny>> = 
     ...early_access_features,
     ...endpoints,
     ...error_tracking,
+    ...error_tracking_alerts,
     ...experiments,
     ...feature_flags,
     ...integrations,
