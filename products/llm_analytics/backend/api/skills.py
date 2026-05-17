@@ -320,9 +320,9 @@ class LLMSkillViewSet(
         if skill is None and _is_uuid(skill_name):
             skill_by_id = get_active_skill_queryset(self.team).filter(id=skill_name).first()
             if skill_by_id is not None:
-                redirect_url = request.build_absolute_uri(
-                    request.get_full_path().replace(skill_name, skill_by_id.name, 1)
-                )
+                # Use a relative path (no build_absolute_uri) to avoid embedding the
+                # Host header in the Location value — prevents host-header open-redirect.
+                redirect_url = request.get_full_path().replace(skill_name, skill_by_id.name, 1)
                 response = Response(status=status.HTTP_302_FOUND)
                 response["Location"] = redirect_url
                 return response
