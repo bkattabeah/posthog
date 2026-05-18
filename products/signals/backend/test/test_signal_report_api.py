@@ -249,7 +249,9 @@ class TestSignalReportListAPI(APIBaseTest):
     def test_filter_priority_invalid_value_returns_400(self, _name, raw):
         response = self.client.get(self._list_url(priority=raw))
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "priority" in response.json()
+        body = response.json()
+        assert body["attr"] == "priority"
+        assert body["code"] == "invalid_input"
 
     def test_filter_priority_combines_with_ordering(self):
         r_p2 = self._create_report(title="P2 report")
