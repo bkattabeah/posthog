@@ -208,48 +208,33 @@ class TestSignalReportListAPI(APIBaseTest):
 
     # --- priority filter ---
 
-    def test_filter_by_single_priority(self):
-        r_p0 = self._create_report(title="P0 report")
-        r_p1 = self._create_report(title="P1 report")
-        r_p2 = self._create_report(title="P2 report")
-        self._priority_artefact(r_p0, priority="P0")
-        self._priority_artefact(r_p1, priority="P1")
-        self._priority_artefact(r_p2, priority="P2")
+    @parameterized.expand(
+        [
+            ("single", "P1", {"P1"}),
+            ("multiple", "P0,P2", {"P0", "P2"}),
+            ("case_insensitive", "p1", {"P1"}),
+        ]
+    )
+    def test_filter_by_priority(self, _name, query_value, expected_priorities):
+        reports_by_priority = {
+            "P0": self._create_report(title="P0 report"),
+            "P1": self._create_report(title="P1 report"),
+            "P2": self._create_report(title="P2 report"),
+        }
+        for priority, report in reports_by_priority.items():
+            self._priority_artefact(report, priority=priority)
 
-        response = self.client.get(self._list_url(priority="P1"))
+        response = self.client.get(self._list_url(priority=query_value))
         assert response.status_code == status.HTTP_200_OK
         ids = {r["id"] for r in response.json()["results"]}
-        assert ids == {str(r_p1.id)}
-
-    def test_filter_by_multiple_priorities(self):
-        r_p0 = self._create_report(title="P0 report")
-        r_p1 = self._create_report(title="P1 report")
-        r_p2 = self._create_report(title="P2 report")
-        self._priority_artefact(r_p0, priority="P0")
-        self._priority_artefact(r_p1, priority="P1")
-        self._priority_artefact(r_p2, priority="P2")
-
-        response = self.client.get(self._list_url(priority="P0,P2"))
-        assert response.status_code == status.HTTP_200_OK
-        ids = {r["id"] for r in response.json()["results"]}
-        assert ids == {str(r_p0.id), str(r_p2.id)}
+        assert ids == {str(reports_by_priority[p].id) for p in expected_priorities}
 
     def test_filter_excludes_reports_without_priority(self):
-        r_none = self._create_report(title="No priority")
+        self._create_report(title="No priority")
         r_p1 = self._create_report(title="P1 report")
         self._priority_artefact(r_p1, priority="P1")
 
         response = self.client.get(self._list_url(priority="P1"))
-        assert response.status_code == status.HTTP_200_OK
-        ids = {r["id"] for r in response.json()["results"]}
-        assert ids == {str(r_p1.id)}
-        assert str(r_none.id) not in ids
-
-    def test_filter_priority_case_insensitive(self):
-        r_p1 = self._create_report(title="P1 report")
-        self._priority_artefact(r_p1, priority="P1")
-
-        response = self.client.get(self._list_url(priority="p1"))
         assert response.status_code == status.HTTP_200_OK
         ids = {r["id"] for r in response.json()["results"]}
         assert ids == {str(r_p1.id)}

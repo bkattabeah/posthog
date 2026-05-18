@@ -450,7 +450,9 @@ class SignalReportViewSet(
         invalid = [v for v in values if v not in allowed]
         if invalid:
             raise serializers.ValidationError(
-                {"priority": f"Invalid priority value(s): {', '.join(sorted(set(invalid)))}. Allowed: {', '.join(sorted(allowed))}."}
+                {
+                    "priority": f"Invalid priority value(s): {', '.join(sorted(set(invalid)))}. Allowed: {', '.join(sorted(allowed))}."
+                }
             )
 
         return queryset.filter(priority_rank__in=values)
