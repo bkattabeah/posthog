@@ -206,6 +206,79 @@ class TestSignalReportListAPI(APIBaseTest):
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["priority"] == "P0"
 
+    # --- priority filter ---
+
+    def test_filter_by_single_priority(self):
+        r_p0 = self._create_report(title="P0 report")
+        r_p1 = self._create_report(title="P1 report")
+        r_p2 = self._create_report(title="P2 report")
+        self._priority_artefact(r_p0, priority="P0")
+        self._priority_artefact(r_p1, priority="P1")
+        self._priority_artefact(r_p2, priority="P2")
+
+        response = self.client.get(self._list_url(priority="P1"))
+        assert response.status_code == status.HTTP_200_OK
+        ids = {r["id"] for r in response.json()["results"]}
+        assert ids == {str(r_p1.id)}
+
+    def test_filter_by_multiple_priorities(self):
+        r_p0 = self._create_report(title="P0 report")
+        r_p1 = self._create_report(title="P1 report")
+        r_p2 = self._create_report(title="P2 report")
+        self._priority_artefact(r_p0, priority="P0")
+        self._priority_artefact(r_p1, priority="P1")
+        self._priority_artefact(r_p2, priority="P2")
+
+        response = self.client.get(self._list_url(priority="P0,P2"))
+        assert response.status_code == status.HTTP_200_OK
+        ids = {r["id"] for r in response.json()["results"]}
+        assert ids == {str(r_p0.id), str(r_p2.id)}
+
+    def test_filter_excludes_reports_without_priority(self):
+        r_none = self._create_report(title="No priority")
+        r_p1 = self._create_report(title="P1 report")
+        self._priority_artefact(r_p1, priority="P1")
+
+        response = self.client.get(self._list_url(priority="P1"))
+        assert response.status_code == status.HTTP_200_OK
+        ids = {r["id"] for r in response.json()["results"]}
+        assert ids == {str(r_p1.id)}
+        assert str(r_none.id) not in ids
+
+    def test_filter_priority_case_insensitive(self):
+        r_p1 = self._create_report(title="P1 report")
+        self._priority_artefact(r_p1, priority="P1")
+
+        response = self.client.get(self._list_url(priority="p1"))
+        assert response.status_code == status.HTTP_200_OK
+        ids = {r["id"] for r in response.json()["results"]}
+        assert ids == {str(r_p1.id)}
+
+    @parameterized.expand(
+        [
+            ("out_of_range", "P9"),
+            ("garbage", "not-a-priority"),
+            ("mixed_valid_and_invalid", "P0,P9"),
+        ]
+    )
+    def test_filter_priority_invalid_value_returns_400(self, _name, raw):
+        response = self.client.get(self._list_url(priority=raw))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "priority" in response.json()
+
+    def test_filter_priority_combines_with_ordering(self):
+        r_p2 = self._create_report(title="P2 report")
+        r_p0 = self._create_report(title="P0 report")
+        r_p1 = self._create_report(title="P1 report")
+        self._priority_artefact(r_p2, priority="P2")
+        self._priority_artefact(r_p0, priority="P0")
+        self._priority_artefact(r_p1, priority="P1")
+
+        response = self.client.get(self._list_url(priority="P0,P2", ordering="priority"))
+        assert response.status_code == status.HTTP_200_OK
+        ids = [r["id"] for r in response.json()["results"]]
+        assert ids == [str(r_p0.id), str(r_p2.id)]
+
     # --- ordering ---
 
     def test_ready_before_candidate_even_if_candidate_has_higher_weight(self):
