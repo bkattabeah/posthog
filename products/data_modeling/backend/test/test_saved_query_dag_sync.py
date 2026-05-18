@@ -17,6 +17,7 @@ from products.data_modeling.backend.services.saved_query_dag_sync import (
     update_node_type,
 )
 from products.data_warehouse.backend.models import DataWarehouseSavedQuery
+from products.data_warehouse.backend.models.modeling import ResolutionCycleError
 
 
 @pytest.mark.django_db
@@ -199,7 +200,7 @@ class TestSyncSavedQueryToDag(BaseTest):
         # update a to depend on b (cycle) — should fail
         query_a.query = {"query": "SELECT * FROM view_b", "kind": "HogQLQuery"}
         query_a.save()
-        with self.assertRaises(QueryError):
+        with self.assertRaises(ResolutionCycleError):
             sync_saved_query_to_dag(query_a)
 
         # node for query_a should be cleaned up
