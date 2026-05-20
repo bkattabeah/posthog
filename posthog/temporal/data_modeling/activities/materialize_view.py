@@ -259,7 +259,7 @@ async def get_query_row_count(
         dialect="clickhouse",
         settings=settings,
         stack=[],
-        resolver_factory=bounded_resolver_factory_for_view(view_name),
+        resolver_factory=bounded_resolver_factory_for_view(view_name, enforce_bounds=False),
     )
 
     if prepared_hogql_query is None:
@@ -297,7 +297,7 @@ async def hogql_table(query: str, team: Team, logger: FilteringBoundLogger, view
     )
     context.database = await database_sync_to_async(Database.create_for)(team=team, modifiers=context.modifiers)
 
-    factory = bounded_resolver_factory_for_view(view_name)
+    factory = bounded_resolver_factory_for_view(view_name, enforce_bounds=False)
     prepared_hogql_query = await database_sync_to_async(prepare_ast_for_printing)(
         query_node,
         context=context,
