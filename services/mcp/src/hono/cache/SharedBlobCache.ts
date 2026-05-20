@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import type { RedisLike } from './RedisCache'
 
 const DEFAULT_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60 // 7 days — hard expiry
-const DEFAULT_FRESH_SECONDS = 60 * 60 // 1 hour — after this, trigger a refresh
+const DEFAULT_FRESH_SECONDS = 60 * 10 // 10 minutes — after this, trigger a refresh
 const DEFAULT_LOCK_TTL_SECONDS = 60 // writer lock auto-expires
 const DEFAULT_WAIT_INTERVAL_MS = 200
 const DEFAULT_WAIT_TIMEOUT_MS = 10_000
