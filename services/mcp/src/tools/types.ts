@@ -92,6 +92,14 @@ export type Context = {
      * stateManager when not provided.
      */
     trackEvent: (event: AnalyticsEvent, properties?: Record<string, unknown>) => Promise<void>
+    /**
+     * Optional override for fetching the context-mill resources archive bytes.
+     * When provided, `resources/index.ts` delegates the upstream fetch to this
+     * loader (used by the hono runtime to share a Redis-backed cache with a
+     * single-writer lock across instances). Workers leave it unset and fall
+     * back to the direct `fetch()` path.
+     */
+    contextMillArchiveLoader?: (url: string) => Promise<Uint8Array>
 }
 
 export type Tool<TSchema extends z.ZodType = z.ZodType, TResult = unknown> = {

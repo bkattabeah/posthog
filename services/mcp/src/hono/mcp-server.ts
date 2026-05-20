@@ -30,6 +30,7 @@ import { createExecInnerToolCallResolver, createExecTool, type ExecInnerCallTrac
 import { getToolDefinition } from '@/tools/toolDefinitions'
 import { type Context, type Env, type State, type Tool } from '@/tools/types'
 
+import { ContextMillCache } from './cache/ContextMillCache'
 import { RedisCache, type RedisLike } from './cache/RedisCache'
 import { getCustomApiBaseUrl, getEnv } from './constants'
 import { initDurationSeconds, toolCallDurationSeconds, toolCallsTotal } from './metrics'
@@ -66,6 +67,8 @@ export class HonoMcpServer {
     private _api: ApiClient | undefined
 
     private _sessionManager: SessionManager | undefined
+
+    private _contextMillCache: ContextMillCache | undefined
 
     private redis: RedisLike
 
@@ -110,6 +113,23 @@ export class HonoMcpServer {
         }
 
         return this._sessionManager
+    }
+
+    get contextMillCache(): ContextMillCache {
+        if (!this._contextMillCache) {
+            this._contextMillCache = new ContextMillCache(this.redis)
+        }
+        return this._contextMillCache
+    }
+
+    private loadContextMillArchive = async (url: string): Promise<Uint8Array> => {
+        return this.contextMillCache.fetchArchive(url, async (target) => {
+            const response = await fetch(target)
+            if (!response.ok) {
+                throw new Error(`Failed to fetch context-mill resources from ${target}: ${response.statusText}`)
+            }
+            return new Uint8Array(await response.arrayBuffer())
+        })
     }
 
     async resolveClientInfo(): Promise<void> {
@@ -347,6 +367,7 @@ export class HonoMcpServer {
             stateManager,
             sessionManager: this.sessionManager,
             getDistinctId: () => this.getDistinctId(),
+            contextMillArchiveLoader: this.loadContextMillArchive,
         }
         const trackEvent: Context['trackEvent'] = async (event, properties = {}) => {
             const analyticsContext = await this.getAnalyticsContextSafe(partialContext)

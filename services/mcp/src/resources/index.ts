@@ -16,9 +16,23 @@ export const CONTEXT_MILL_URL =
 // Cache for context-mill resources ZIP contents
 let cachedResources: Unzipped | null = null
 
+async function defaultFetchArchiveBytes(url: string, noStore: boolean): Promise<Uint8Array> {
+    const response = await fetch(url, noStore ? { cache: 'no-store' } : {})
+    if (!response.ok) {
+        throw new Error(`Failed to fetch context-mill resources from ${url}: ${response.statusText}`)
+    }
+    const arrayBuffer = await response.arrayBuffer()
+    return new Uint8Array(arrayBuffer)
+}
+
 /**
  * Fetches and caches the context-mill resources ZIP
- * For local testing, set POSTHOG_MCP_LOCAL_SKILLS_URL to a local HTTP URL
+ * For local testing, set POSTHOG_MCP_LOCAL_SKILLS_URL to a local HTTP URL.
+ *
+ * When `context.contextMillArchiveLoader` is set (hono runtime), the upstream
+ * fetch is delegated to it so multiple instances share a Redis-backed cache
+ * with single-writer coordination. The in-memory `cachedResources` still acts
+ * as a per-process fast path on top of that layer.
  */
 async function fetchContextMillResources(context: Context): Promise<Unzipped> {
     // Check for local URL override in environment (for testing)
@@ -31,15 +45,12 @@ async function fetchContextMillResources(context: Context): Promise<Unzipped> {
         return cachedResources
     }
 
-    const response = await fetch(url, localUrl ? { cache: 'no-store' } : {})
+    const bytes =
+        !localUrl && context.contextMillArchiveLoader
+            ? await context.contextMillArchiveLoader(url)
+            : await defaultFetchArchiveBytes(url, !!localUrl)
 
-    if (!response.ok) {
-        throw new Error(`Failed to fetch context-mill resources from ${url}: ${response.statusText}`)
-    }
-
-    const arrayBuffer = await response.arrayBuffer()
-    const uint8Array = new Uint8Array(arrayBuffer)
-    const unzipped = unzipSync(uint8Array)
+    const unzipped = unzipSync(bytes)
 
     // Only cache if not using local URL override
     if (!localUrl) {
