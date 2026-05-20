@@ -75,7 +75,6 @@ from products.data_warehouse.backend.models import (
     get_s3_client,
 )
 from products.data_warehouse.backend.models.data_modeling_job import DataModelingJob
-from products.data_warehouse.backend.models.modeling import BoundedResolver
 from products.data_warehouse.backend.s3 import ensure_bucket_exists
 from products.endpoints.backend.rate_limit import set_endpoint_materialization_ready
 
@@ -526,7 +525,7 @@ async def materialize_model(
             await logger.adebug(f"Table at {table_uri} not found - skipping deletion")
 
         try:
-            rows_expected = await get_query_row_count(hogql_query, team, logger, view_name=saved_query.name)
+            rows_expected = await get_query_row_count(hogql_query, team, logger)
             await logger.ainfo(f"Expected rows: {rows_expected}")
             # Set expected rows on the job
             job.rows_expected = rows_expected
@@ -543,9 +542,7 @@ async def materialize_model(
 
         delta_table: deltalake.DeltaTable | None = None
 
-        async for index, res in asyncstdlib.enumerate(
-            hogql_table(hogql_query, team, logger, view_name=saved_query.name)
-        ):
+        async for index, res in asyncstdlib.enumerate(hogql_table(hogql_query, team, logger)):
             batch, ch_types = res
             batch = _transform_unsupported_decimals(batch)
             batch = _transform_date_and_datetimes(batch, ch_types)
@@ -805,18 +802,7 @@ async def update_table_row_count(
         await logger.aexception("Failed to update row count for table %s: %s", saved_query.name, str(e))
 
 
-def _bounded_resolver_factory(view_name: str | None):
-    """Build a resolver factory that bounds depth, cycles, and deadline using the saved query's name as the seed."""
-
-    def factory(context, dialect, scopes):
-        return BoundedResolver(scopes=scopes, context=context, dialect=dialect, initial_view_name=view_name)
-
-    return factory
-
-
-async def get_query_row_count(
-    query: str, team: Team, logger: FilteringBoundLogger, view_name: str | None = None
-) -> int:
+async def get_query_row_count(query: str, team: Team, logger: FilteringBoundLogger) -> int:
     """Get the total row count for a HogQL query. Differs in extraction with std query since it's a count query."""
     count_query = f"SELECT count() FROM ({query})"
 
@@ -837,12 +823,7 @@ async def get_query_row_count(
     context.database = await database_sync_to_async(Database.create_for)(team=team, modifiers=context.modifiers)
 
     prepared_hogql_query = await database_sync_to_async(prepare_ast_for_printing)(
-        query_node,
-        context=context,
-        dialect="clickhouse",
-        settings=settings,
-        stack=[],
-        resolver_factory=_bounded_resolver_factory(view_name),
+        query_node, context=context, dialect="clickhouse", settings=settings, stack=[]
     )
 
     if prepared_hogql_query is None:
@@ -867,7 +848,7 @@ async def get_query_row_count(
 MB_100_IN_BYTES = 100 * 1000 * 1000
 
 
-async def hogql_table(query: str, team: Team, logger: FilteringBoundLogger, view_name: str | None = None):
+async def hogql_table(query: str, team: Team, logger: FilteringBoundLogger):
     """A HogQL table given by a HogQL query."""
 
     await logger.adebug("Configuring hogql_table")
@@ -888,14 +869,8 @@ async def hogql_table(query: str, team: Team, logger: FilteringBoundLogger, view
     )
     context.database = await database_sync_to_async(Database.create_for)(team=team, modifiers=context.modifiers)
 
-    factory = _bounded_resolver_factory(view_name)
     prepared_hogql_query = await database_sync_to_async(prepare_ast_for_printing)(
-        query_node,
-        context=context,
-        dialect="clickhouse",
-        settings=settings,
-        stack=[],
-        resolver_factory=factory,
+        query_node, context=context, dialect="clickhouse", settings=settings, stack=[]
     )
     if prepared_hogql_query is None:
         raise EmptyHogQLResponseColumnsError()
@@ -1006,12 +981,7 @@ async def hogql_table(query: str, team: Team, logger: FilteringBoundLogger, view
     settings.preferred_block_size_bytes = MB_100_IN_BYTES
 
     arrow_prepared_hogql_query = await database_sync_to_async(prepare_ast_for_printing)(
-        query_node,
-        context=context,
-        dialect="clickhouse",
-        stack=[],
-        settings=settings,
-        resolver_factory=factory,
+        query_node, context=context, dialect="clickhouse", stack=[], settings=settings
     )
 
     if arrow_prepared_hogql_query is None:
