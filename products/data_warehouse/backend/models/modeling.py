@@ -180,9 +180,9 @@ class BoundedResolver(Resolver):
         # outermost call owns metric emission
         start_time = time.monotonic()
         self.start_time = start_time
-        self._check_deadline()
         status: str = "ok"
         try:
+            self._check_deadline()
             return super().visit(node)
         except BoundedResolverError as e:
             status = e.status_label
