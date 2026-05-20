@@ -30,8 +30,8 @@ import { createExecInnerToolCallResolver, createExecTool, type ExecInnerCallTrac
 import { getToolDefinition } from '@/tools/toolDefinitions'
 import { type Context, type Env, type State, type Tool } from '@/tools/types'
 
-import { ContextMillCache } from './cache/ContextMillCache'
 import { RedisCache, type RedisLike } from './cache/RedisCache'
+import { SharedBlobCache } from './cache/SharedBlobCache'
 import { getCustomApiBaseUrl, getEnv } from './constants'
 import { initDurationSeconds, toolCallDurationSeconds, toolCallsTotal } from './metrics'
 
@@ -68,7 +68,7 @@ export class HonoMcpServer {
 
     private _sessionManager: SessionManager | undefined
 
-    private _contextMillCache: ContextMillCache | undefined
+    private _contextMillCache: SharedBlobCache | undefined
 
     private redis: RedisLike
 
@@ -115,18 +115,18 @@ export class HonoMcpServer {
         return this._sessionManager
     }
 
-    get contextMillCache(): ContextMillCache {
+    get contextMillCache(): SharedBlobCache {
         if (!this._contextMillCache) {
-            this._contextMillCache = new ContextMillCache(this.redis)
+            this._contextMillCache = new SharedBlobCache(this.redis, 'context-mill:archive')
         }
         return this._contextMillCache
     }
 
     private loadContextMillArchive = async (url: string): Promise<Uint8Array> => {
-        return this.contextMillCache.fetchArchive(url, async (target) => {
-            const response = await fetch(target)
+        return this.contextMillCache.fetch(async () => {
+            const response = await fetch(url)
             if (!response.ok) {
-                throw new Error(`Failed to fetch context-mill resources from ${target}: ${response.statusText}`)
+                throw new Error(`Failed to fetch context-mill resources from ${url}: ${response.statusText}`)
             }
             return new Uint8Array(await response.arrayBuffer())
         })
