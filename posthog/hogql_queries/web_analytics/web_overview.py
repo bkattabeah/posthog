@@ -19,7 +19,6 @@ from posthog.hogql_queries.web_analytics.web_analytics_query_runner import WebAn
 from posthog.hogql_queries.web_analytics.web_overview_lazy_precompute import (
     can_use_eager_precompute,
     can_use_lazy_precompute,
-    execute_eager_precomputed_read,
     execute_lazy_precomputed_read,
 )
 from posthog.hogql_queries.web_analytics.web_overview_pre_aggregated import WebOverviewPreAggregatedQueryBuilder
@@ -82,19 +81,8 @@ class WebOverviewQueryRunner(WebAnalyticsQueryRunner[WebOverviewQueryResponse]):
             return None
 
     def get_precomputed_row(self) -> Optional[list]:
-        """Try precomputed paths in order: eager read-only → lazy INSERT → None."""
-        if can_use_eager_precompute(self):
-            row = execute_eager_precomputed_read(self)
-            if row is not None:
-                return row
-            # Miss on eager — fall through to lazy INSERT if also enabled.
-            if can_use_lazy_precompute(self):
-                return execute_lazy_precomputed_read(self)
-            return None
-
-        if can_use_lazy_precompute(self):
+        if can_use_eager_precompute(self) or can_use_lazy_precompute(self):
             return execute_lazy_precomputed_read(self)
-
         return None
 
     def get_lazy_precomputed_row(self) -> Optional[list]:
