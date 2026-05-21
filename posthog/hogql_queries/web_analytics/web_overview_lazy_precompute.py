@@ -180,9 +180,9 @@ def can_use_lazy_precompute(runner: "WebOverviewQueryRunner") -> bool:
 
 
 def can_use_eager_precompute(runner: "WebOverviewQueryRunner") -> bool:
-    """Gate check for the eager (Dagster pre-warmed) precompute path.
+    """Gate check for teams whose data is kept fresh by the Dagster pre-warming job.
 
-    Unlike lazy, eager is read-only so it requires no per-query opt-in toggle —
+    No per-query toggle required — the Dagster job guarantees freshness so
     the team allowlist and query-shape guards are sufficient.
     """
     enabled_team_ids = get_instance_setting("WEB_ANALYTICS_EAGER_PRECOMPUTE_TEAM_IDS") or []
