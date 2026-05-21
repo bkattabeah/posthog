@@ -65,7 +65,7 @@ class SSHTunnelMixin:
     """Mixin for sources that support SSH tunnels"""
 
     @contextmanager
-    def with_ssh_tunnel(self, config) -> Generator[tuple[str, int], Any, None]:
+    def with_ssh_tunnel(self, config) -> Generator[tuple[str, int], Any]:
         if hasattr(config, "ssh_tunnel") and config.ssh_tunnel and config.ssh_tunnel.enabled:
             ssh_tunnel = SSHTunnel.from_config(config.ssh_tunnel)
 
