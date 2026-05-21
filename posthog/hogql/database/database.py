@@ -146,10 +146,13 @@ from products.data_warehouse.backend.models.external_data_job import ExternalDat
 from products.data_warehouse.backend.models.external_data_schema import ExternalDataSchema
 from products.data_warehouse.backend.models.external_data_source import ExternalDataSource
 from products.data_warehouse.backend.models.table import DataWarehouseTable, DataWarehouseTableColumns
+from products.data_warehouse.backend.sync_status import get_warehouse_sync_warnings
 from products.revenue_analytics.backend.views import RevenueAnalyticsBaseView
 from products.revenue_analytics.backend.views.orchestrator import build_all_revenue_analytics_views
 
 if TYPE_CHECKING:
+    from posthog.schema import DataWarehouseSyncWarning
+
     from posthog.models import Team, User
     from posthog.rbac.user_access_control import UserAccessControl
 
@@ -309,6 +312,9 @@ class Database(BaseModel):
     _connection_id: str | None = None
     _direct_connection_metadata: dict[str, Any] | None = None
     _direct_access_warehouse_table_names: set[str] = set()
+    # Warnings about data warehouse tables (failed/paused/billing-limited/stale syncs),
+    # keyed by HogQL DataWarehouseTable.table_id (str(Django table UUID)).
+    _data_warehouse_sync_warnings: dict[str, list["DataWarehouseSyncWarning"]] = {}
 
     _timezone: str | None
     _week_start_day: WeekStartDay | None
@@ -333,6 +339,7 @@ class Database(BaseModel):
         self._connection_id = None
         self._direct_connection_metadata = None
         self._direct_access_warehouse_table_names = set()
+        self._data_warehouse_sync_warnings = {}
         self._serialization_errors: dict[str, str] = {}  # table_key -> error_message
         self.user_access_control: Optional[UserAccessControl] = None
 
@@ -1151,6 +1158,10 @@ class Database(BaseModel):
 
                 with timings.measure(f"table_{table.name}"):
                     s3_table = table.hogql_definition(modifiers)
+
+                    sync_warnings = get_warehouse_sync_warnings(table)
+                    if sync_warnings:
+                        database._data_warehouse_sync_warnings[str(table.id)] = sync_warnings
                     primary_table = s3_table
 
                     # If the warehouse table has no _properties_ field, then set it as a virtual table
