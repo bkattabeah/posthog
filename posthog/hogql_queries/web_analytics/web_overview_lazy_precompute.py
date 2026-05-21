@@ -22,6 +22,7 @@ from products.analytics_platform.backend.lazy_computation.lazy_computation_execu
     LazyComputationResult,
     LazyComputationTable,
     ensure_precomputed,
+    read_precomputed_jobs_if_ready,
 )
 
 if TYPE_CHECKING:
@@ -33,7 +34,12 @@ logger = structlog.get_logger(__name__)
 # timezone — boundaries line up exactly when the team-local window is converted
 # to UTC before filtering on `time_window_start`. Half-hour-offset timezones
 # (IST, Newfoundland, Nepal, etc.) are explicitly gated out below.
-LAZY_TTL_SECONDS = 2 * 60 * 60  # 2 hours: max staleness for all date windows
+LAZY_TTL_SECONDS: dict[str, int] = {
+    "0d": 30 * 60,
+    "1d": 120 * 60,
+    "7d": 24 * 60 * 60,
+    "default": 7 * 24 * 60 * 60,
+}
 
 # Today the gate accepts: empty user filters, or a single EventPropertyFilter
 # on `$host` with operator `exact`. Test-account filters are always allowed
@@ -48,6 +54,18 @@ MAX_PRECOMPUTE_DAYS = 90
 WEB_OVERVIEW_LAZY_FAILED = Counter(
     "web_overview_lazy_precompute_failed_total",
     "Lazy precompute path failures, by error class",
+    ["error_type"],
+)
+
+WEB_OVERVIEW_EAGER_MISS = Counter(
+    "web_overview_eager_precompute_miss_total",
+    "Eager read-only miss (no precomputed jobs ready), falls back to lazy INSERT",
+    ["team_id"],
+)
+
+WEB_OVERVIEW_EAGER_FAILED = Counter(
+    "web_overview_eager_precompute_failed_total",
+    "Eager precompute path exceptions (distinct from lazy INSERT failures)",
     ["error_type"],
 )
 
@@ -180,12 +198,13 @@ def can_use_lazy_precompute(runner: "WebOverviewQueryRunner") -> bool:
 
 
 def can_use_eager_precompute(runner: "WebOverviewQueryRunner") -> bool:
-    """Gate check for teams whose data is kept fresh by the Dagster pre-warming job.
+    """Gate check for the eager (Dagster pre-warmed) precompute path.
 
-    No per-query toggle required — the Dagster job guarantees freshness so
+    Unlike lazy, eager is read-only so it requires no per-query opt-in toggle —
     the team allowlist and query-shape guards are sufficient.
     """
-    enabled_team_ids = get_instance_setting("WEB_ANALYTICS_EAGER_PRECOMPUTE_TEAM_IDS") or []
+    value = get_instance_setting("WEB_ANALYTICS_EAGER_PRECOMPUTE_TEAM_IDS")
+    enabled_team_ids: list[int] = value if isinstance(value, list) else []
     if runner.team.pk not in enabled_team_ids:
         return False
     return can_use_precomputed_path(runner)
@@ -389,6 +408,23 @@ def ensure_web_overview_precomputed(
     )
 
 
+def read_web_overview_if_ready(
+    runner: "WebOverviewQueryRunner",
+    time_range_start: datetime,
+    time_range_end: datetime,
+) -> LazyComputationResult:
+    """Read-only lookup: returns READY jobs without triggering any INSERTs."""
+    return read_precomputed_jobs_if_ready(
+        team=runner.team,
+        insert_query=INSERT_QUERY_TEMPLATE,
+        time_range_start=time_range_start,
+        time_range_end=time_range_end,
+        ttl_seconds=LAZY_TTL_SECONDS,
+        table=LazyComputationTable.WEB_OVERVIEW_PREAGGREGATED,
+        placeholders=_build_placeholders(runner),
+    )
+
+
 _READ_SQL = f"""
 SELECT
     uniqMergeIf(uniq_users_state, time_window_start >= %(cur_start)s AND time_window_start < %(cur_end)s) AS unique_users,
@@ -474,6 +510,115 @@ def _empty_response_row() -> list:
     # response gets fully populated from the read query, so this default is only
     # used for genuinely empty windows.
     return [0, None, 0, None, 0, None, 0, None, 0, None]
+
+
+def _compute_utc_bounds(
+    runner: "WebOverviewQueryRunner",
+) -> Optional[tuple[datetime, datetime, datetime, datetime]]:
+    """Return (current_start_utc, current_end_utc, time_range_start, time_range_end) or None."""
+    date_from = runner.query_date_range.date_from()
+    date_to = runner.query_date_range.date_to()
+    if date_from is None or date_to is None:
+        return None
+
+    current_start_utc = date_from.astimezone(UTC)
+    current_end_utc = date_to.astimezone(UTC)
+    time_range_start = _floor_utc_day(current_start_utc)
+    time_range_end = _ceil_utc_day(current_end_utc)
+
+    if time_range_start >= time_range_end:
+        return None
+
+    return current_start_utc, current_end_utc, time_range_start, time_range_end
+
+
+def _read_from_result(
+    runner: "WebOverviewQueryRunner",
+    result: LazyComputationResult,
+    current_start_utc: datetime,
+    current_end_utc: datetime,
+) -> Optional[list]:
+    """Execute the read SQL against ready job_ids and return the result row."""
+    if not result.job_ids:
+        return None
+
+    previous_start_utc: Optional[datetime] = None
+    previous_end_utc: Optional[datetime] = None
+    if runner.query_compare_to_date_range is not None:
+        prev_from = runner.query_compare_to_date_range.date_from()
+        prev_to = runner.query_compare_to_date_range.date_to()
+        if prev_from is not None and prev_to is not None:
+            previous_start_utc = prev_from.astimezone(UTC)
+            previous_end_utc = prev_to.astimezone(UTC)
+
+    rows = execute_read_query(
+        team_id=runner.team.pk,
+        job_ids=[str(jid) for jid in result.job_ids],
+        current_start_utc=current_start_utc,
+        current_end_utc=current_end_utc,
+        previous_start_utc=previous_start_utc,
+        previous_end_utc=previous_end_utc,
+    )
+    if not rows:
+        return _empty_response_row()
+    return list(rows[0])
+
+
+def execute_eager_precomputed_read(
+    runner: "WebOverviewQueryRunner",
+) -> Optional[list]:
+    """Read-only path: return precomputed row if all windows are READY, else None.
+
+    Does not trigger any INSERTs. A None return means the caller should fall
+    back to lazy INSERT or the raw query path.
+    """
+    try:
+        bounds = _compute_utc_bounds(runner)
+        if bounds is None:
+            return None
+
+        current_start_utc, current_end_utc, time_range_start, time_range_end = bounds
+
+        result = read_web_overview_if_ready(
+            runner=runner,
+            time_range_start=time_range_start,
+            time_range_end=time_range_end,
+        )
+
+        if not result.ready:
+            WEB_OVERVIEW_EAGER_MISS.labels(team_id=str(runner.team.pk)).inc()
+            return None
+
+        # Also ensure compare-period windows are covered before committing to
+        # the eager result — a partial hit on the compare period would silently
+        # return zeros for previous_* metrics.
+        if runner.query_compare_to_date_range is not None:
+            prev_from = runner.query_compare_to_date_range.date_from()
+            prev_to = runner.query_compare_to_date_range.date_to()
+            if prev_from is not None and prev_to is not None:
+                prev_start_utc = prev_from.astimezone(UTC)
+                prev_end_utc = prev_to.astimezone(UTC)
+                prev_range_start = _floor_utc_day(prev_start_utc)
+                prev_range_end = _ceil_utc_day(prev_end_utc)
+                if prev_range_start < prev_range_end:
+                    prev_result = read_web_overview_if_ready(
+                        runner=runner,
+                        time_range_start=prev_range_start,
+                        time_range_end=prev_range_end,
+                    )
+                    if not prev_result.ready:
+                        WEB_OVERVIEW_EAGER_MISS.labels(team_id=str(runner.team.pk)).inc()
+                        return None
+                    result = LazyComputationResult(
+                        ready=True,
+                        job_ids=list(result.job_ids) + list(prev_result.job_ids),
+                    )
+
+        return _read_from_result(runner, result, current_start_utc, current_end_utc)
+    except Exception as exc:
+        WEB_OVERVIEW_EAGER_FAILED.labels(error_type=type(exc).__name__).inc()
+        logger.exception("web_overview_eager_precompute_failed", team_id=runner.team.pk)
+        return None
 
 
 def execute_lazy_precomputed_read(

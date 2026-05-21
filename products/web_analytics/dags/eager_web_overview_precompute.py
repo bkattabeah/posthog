@@ -4,16 +4,20 @@ Runs on a 15-minute schedule and fans out over enabled teams × standard date
 ranges so that read queries find READY jobs and bypass inline INSERTs entirely.
 """
 
+import json
 from datetime import UTC, datetime, timedelta
 
 import dagster
+import structlog
 from dagster import Backoff, Jitter, RetryPolicy
 from prometheus_client import Counter
 
 from posthog.hogql import ast
 from posthog.hogql.parser import parse_expr
+from posthog.hogql.property import property_to_expr
 
 from posthog.clickhouse.client import sync_execute
+from posthog.clickhouse.query_tagging import Feature, tags_context
 from posthog.dags.common import JobOwners
 from posthog.exceptions_capture import capture_exception
 from posthog.hogql_queries.web_analytics.web_overview_lazy_precompute import (
@@ -31,9 +35,11 @@ from products.analytics_platform.backend.lazy_computation.lazy_computation_execu
 )
 from products.web_analytics.dags.web_preaggregated_utils import check_for_concurrent_runs
 
+logger = structlog.get_logger(__name__)
+
 EAGER_PRECOMPUTE_JOBS_TRIGGERED = Counter(
     "web_overview_eager_precompute_jobs_triggered_total",
-    "INSERT jobs triggered by the eager precompute Dagster job",
+    "READY jobs found (or newly inserted) by the eager precompute Dagster job",
     ["team_id"],
 )
 
@@ -82,28 +88,53 @@ def _standard_date_ranges(now_utc: datetime) -> list[tuple[datetime, datetime]]:
 
 
 def _top_host_values(team_id: int, days: int = 7, limit: int = 5) -> list[str]:
-    """Mine metrics_query_log_mv for the most-queried $host values for this team."""
+    """Mine metrics_query_log_mv for the most-queried $host filter values for this team.
+
+    Fetches the raw query JSON and extracts $host values in Python to avoid
+    brittle ClickHouse JSONPath expressions.
+    """
     try:
-        results = sync_execute(
-            """
-            SELECT
-                JSONExtractString(JSONExtractRaw(log_comment, 'query'), 'properties[0].value') AS host_value,
-                COUNT(*) AS query_count
-            FROM metrics_query_log_mv
-            WHERE
-                timestamp >= now() - INTERVAL %(days)s DAY
-                AND team_id = %(team_id)s
-                AND query_type IN ('web_overview_query', 'web_overview_preaggregated_query')
-                AND exception_code = 0
-                AND host_value != ''
-            GROUP BY host_value
-            ORDER BY query_count DESC
-            LIMIT %(limit)s
-            """,
-            {"team_id": team_id, "days": days, "limit": limit},
-        )
-        return [row[0] for row in results if row[0]]
+        with tags_context(
+            team_id=team_id,
+            feature=Feature.CACHE_WARMUP,
+            query_type="web_overview_eager_host_mining",
+        ):
+            results = sync_execute(
+                """
+                SELECT
+                    JSONExtractRaw(log_comment, 'query') AS query_json_raw,
+                    COUNT(*) AS query_count
+                FROM metrics_query_log_mv
+                WHERE
+                    timestamp >= now() - INTERVAL %(days)s DAY
+                    AND team_id = %(team_id)s
+                    AND query_type IN ('web_overview_query', 'web_overview_preaggregated_query')
+                    AND exception_code = 0
+                    AND query_json_raw != ''
+                GROUP BY query_json_raw
+                ORDER BY query_count DESC
+                LIMIT %(limit)s
+                """,
+                {"team_id": team_id, "days": days, "limit": limit * 10},
+            )
+
+        seen: dict[str, int] = {}
+        for query_json_raw, query_count in results:
+            try:
+                query_data = json.loads(query_json_raw)
+                properties = query_data.get("properties") or []
+                for prop in properties:
+                    if prop.get("key") == "$host" and prop.get("operator") == "exact":
+                        value = prop.get("value")
+                        if isinstance(value, str) and value:
+                            seen[value] = seen.get(value, 0) + query_count
+            except Exception:
+                continue
+
+        return sorted(seen, key=lambda h: seen[h], reverse=True)[:limit]
     except Exception:
+        logger.exception("web_overview_eager_host_mining_failed", team_id=team_id)
+        EAGER_PRECOMPUTE_ERRORS.labels(team_id=str(team_id), error_type="host_mining_failed").inc()
         return []
 
 
@@ -164,8 +195,6 @@ def _test_account_filter_variants(team: Team) -> list[ast.Expr]:
     filters configured, also includes the filtered variant so users with
     filterTestAccounts=True get cache hits too.
     """
-    from posthog.hogql.property import property_to_expr
-
     variants: list[ast.Expr] = [ast.Constant(value=True)]
 
     if isinstance(team.test_account_filters, list) and team.test_account_filters:
@@ -173,7 +202,12 @@ def _test_account_filter_variants(team: Team) -> list[ast.Expr]:
             filtered_expr = property_to_expr(team.test_account_filters, team=team)
             variants.append(filtered_expr)
         except Exception:
-            pass
+            logger.warning(
+                "web_overview_eager_test_account_filter_failed",
+                team_id=team.pk,
+                exc_info=True,
+            )
+            EAGER_PRECOMPUTE_ERRORS.labels(team_id=str(team.pk), error_type="test_account_filter_failed").inc()
 
     return variants
 
