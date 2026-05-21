@@ -2164,6 +2164,7 @@ mod tests {
                 group_type_index: None,
                 negation: None,
                 compiled_regex: None,
+                extra: Default::default(),
             },
             PropertyFilter {
                 key: "age".to_string(),
@@ -2173,6 +2174,7 @@ mod tests {
                 group_type_index: None,
                 negation: None,
                 compiled_regex: None,
+                extra: Default::default(),
             },
         ];
 
@@ -2189,6 +2191,7 @@ mod tests {
                 group_type_index: None,
                 negation: None,
                 compiled_regex: None,
+                extra: Default::default(),
             },
             PropertyFilter {
                 key: "cohort".to_string(),
@@ -2198,6 +2201,7 @@ mod tests {
                 group_type_index: None,
                 negation: None,
                 compiled_regex: None,
+                extra: Default::default(),
             },
         ];
 
@@ -2220,6 +2224,7 @@ mod tests {
                 group_type_index: None,
                 negation: None,
                 compiled_regex: None,
+                extra: Default::default(),
             },
             PropertyFilter {
                 key: "missing_property".to_string(), // This property is NOT in overrides
@@ -2229,6 +2234,7 @@ mod tests {
                 group_type_index: None,
                 negation: None,
                 compiled_regex: None,
+                extra: Default::default(),
             },
         ];
 
@@ -2261,6 +2267,7 @@ mod tests {
             group_type_index: None,
             negation: None,
             compiled_regex: None,
+            extra: Default::default(),
         }];
 
         let result = locally_computable_property_overrides(&overrides, &flag_property_filters);
@@ -2310,6 +2317,7 @@ mod tests {
             negation: None,
             group_type_index: None,
             compiled_regex: None,
+            extra: Default::default(),
         };
 
         let result = match_flag_value_to_flag_filter(&filter, &flag_evaluation_results);
@@ -2328,6 +2336,7 @@ mod tests {
             group_type_index: None,
             negation: None,
             compiled_regex: None,
+            extra: Default::default(),
         };
 
         let result = match_flag_value_to_flag_filter(&filter, &flag_evaluation_results);

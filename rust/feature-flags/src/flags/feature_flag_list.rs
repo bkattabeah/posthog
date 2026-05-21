@@ -1226,6 +1226,7 @@ mod tests {
                             group_type_index: None,
                             negation: None,
                             compiled_regex: None,
+                            extra: Default::default(),
                         },
                         PropertyFilter {
                             key: "name".to_string(),
@@ -1235,6 +1236,7 @@ mod tests {
                             group_type_index: None,
                             negation: None,
                             compiled_regex: None,
+                            extra: Default::default(),
                         },
                     ]),
                     rollout_percentage: Some(100.0),
@@ -1246,6 +1248,7 @@ mod tests {
                 super_groups: None,
                 feature_enrollment: None,
                 holdout: None,
+                extra: Default::default(),
             },
             active: true,
             deleted: false,

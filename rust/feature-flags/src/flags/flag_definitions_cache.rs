@@ -784,10 +784,12 @@ mod tests {
                 group_type_index: None,
                 negation: None,
                 compiled_regex: None,
+                extra: Default::default(),
             }]),
             rollout_percentage: Some(100.0),
             variant: None,
             aggregation_group_type_index: None,
+            extra: Default::default(),
         };
 
         let without = Arc::new(PreparedFlagDefinitions {
