@@ -1058,13 +1058,13 @@ def custom_postprocessing_hook(result, generator, request, public):
             if product and product not in explicit_tags:
                 explicit_tags.append(product)
 
-            definition["x-explicit-tags"] = explicit_tags
+            definition["x-product"] = explicit_tags
 
             definition["tags"] = [d for d in definition["tags"] if d not in ["projects", "environments"]]
 
             # If a ViewSet sets x-swagger-tag via @extend_schema(extensions={"x-swagger-tag": "..."}),
             # use that as the sole display tag instead of appending the URL-derived one.
-            # This controls Swagger UI grouping without affecting x-explicit-tags (used for codegen).
+            # This controls Swagger UI grouping without affecting x-product (used for codegen).
             swagger_tag = definition.pop("x-swagger-tag", None)
             if swagger_tag:
                 definition["tags"] = [swagger_tag]
