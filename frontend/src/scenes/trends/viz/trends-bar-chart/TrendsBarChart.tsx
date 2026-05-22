@@ -2,7 +2,6 @@ import { useValues } from 'kea'
 import posthog from 'posthog-js'
 import { useCallback, useMemo, type ErrorInfo } from 'react'
 
-import { buildTheme } from 'lib/charts/utils/theme'
 import {
     BarChart,
     buildYTickFormatter,
@@ -12,6 +11,8 @@ import {
     ValueLabels,
 } from '@posthog/quill-charts'
 import type { BarChartConfig, PointClickData, TimeSeriesBarChartConfig, TooltipContext } from '@posthog/quill-charts'
+
+import { buildTheme } from 'lib/charts/utils/theme'
 import { formatPercentStackAxisValue } from 'scenes/insights/aggregationAxisFormat'
 import { InsightEmptyState } from 'scenes/insights/EmptyStates'
 import { insightLogic } from 'scenes/insights/insightLogic'

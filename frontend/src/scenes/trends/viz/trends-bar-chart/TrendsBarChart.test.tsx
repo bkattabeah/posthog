@@ -2,8 +2,9 @@ import '@testing-library/jest-dom'
 
 import { cleanup, screen, waitFor } from '@testing-library/react'
 
-import { FEATURE_FLAGS } from 'lib/constants'
 import { setupJsdom, setupSyncRaf } from '@posthog/quill-charts/testing'
+
+import { FEATURE_FLAGS } from 'lib/constants'
 
 import { NodeKind } from '~/queries/schema/schema-general'
 import { buildTrendsQuery, chart, getHogChart, personsModal, renderInsight } from '~/test/insight-testing'

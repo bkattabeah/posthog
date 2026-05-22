@@ -2,9 +2,10 @@ import { useValues } from 'kea'
 import posthog from 'posthog-js'
 import { useMemo, type ErrorInfo } from 'react'
 
-import { buildTheme } from 'lib/charts/utils/theme'
 import { TimeSeriesLineChart } from '@posthog/quill-charts'
 import type { PointClickData, TimeSeriesLineChartConfig, TooltipConfig, TooltipContext } from '@posthog/quill-charts'
+
+import { buildTheme } from 'lib/charts/utils/theme'
 import { insightLogic } from 'scenes/insights/insightLogic'
 import type { SeriesDatum } from 'scenes/insights/InsightTooltip/insightTooltipUtils'
 import { teamLogic } from 'scenes/teamLogic'

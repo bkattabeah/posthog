@@ -1,5 +1,6 @@
-import type { AnomalyPoint } from 'lib/components/Alerts/types'
 import type { AnomalyMarker as BaseAnomalyMarker } from '@posthog/quill-charts'
+
+import type { AnomalyPoint } from 'lib/components/Alerts/types'
 
 import type { IndexedTrendResult } from '../../types'
 

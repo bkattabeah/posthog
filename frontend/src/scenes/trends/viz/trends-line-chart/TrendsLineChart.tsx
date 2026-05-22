@@ -2,9 +2,16 @@ import { useValues } from 'kea'
 import posthog from 'posthog-js'
 import { useCallback, useMemo, type ErrorInfo } from 'react'
 
-import { buildTheme } from 'lib/charts/utils/theme'
 import { DEFAULT_Y_AXIS_ID, TimeSeriesLineChart } from '@posthog/quill-charts'
-import type { PointClickData, Series, TimeSeriesLineChartConfig, TooltipConfig, TooltipContext } from '@posthog/quill-charts'
+import type {
+    PointClickData,
+    Series,
+    TimeSeriesLineChartConfig,
+    TooltipConfig,
+    TooltipContext,
+} from '@posthog/quill-charts'
+
+import { buildTheme } from 'lib/charts/utils/theme'
 import { formatPercentStackAxisValue } from 'scenes/insights/aggregationAxisFormat'
 import { insightLogic } from 'scenes/insights/insightLogic'
 import type { SeriesDatum } from 'scenes/insights/InsightTooltip/insightTooltipUtils'

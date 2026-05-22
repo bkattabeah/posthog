@@ -1,4 +1,5 @@
 import type { Series, TimeSeriesBarChartConfig } from '@posthog/quill-charts'
+
 import { hexToRGBA } from 'lib/utils'
 
 import type { CurrencyCode, GoalLine as SchemaGoalLine, TrendsFilter } from '~/queries/schema/schema-general'

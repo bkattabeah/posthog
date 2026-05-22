@@ -7,6 +7,7 @@ import type {
     TooltipConfig,
     TrendLineConfig,
 } from '@posthog/quill-charts'
+
 import { ciRanges } from 'lib/statistics'
 
 import type { CurrencyCode, GoalLine as SchemaGoalLine, TrendsFilter } from '~/queries/schema/schema-general'

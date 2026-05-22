@@ -1,8 +1,9 @@
 import { useValues } from 'kea'
 import React, { useMemo } from 'react'
 
-import { insightAlertsLogic } from 'lib/components/Alerts/insightAlertsLogic'
 import { AnomalyPointsLayer, ReferenceLines } from '@posthog/quill-charts'
+
+import { insightAlertsLogic } from 'lib/components/Alerts/insightAlertsLogic'
 
 import type { InsightLogicProps } from '~/types'
 

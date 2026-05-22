@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from 'react'
 
-import { SeriesLetter } from 'lib/components/SeriesGlyph'
 import type { TooltipContext } from '@posthog/quill-charts'
+
+import { SeriesLetter } from 'lib/components/SeriesGlyph'
 import { formatAggregationAxisValue, formatPercentStackAxisValue } from 'scenes/insights/aggregationAxisFormat'
 import { InsightTooltip } from 'scenes/insights/InsightTooltip/InsightTooltip'
 import { getDatumTitle, SeriesDatum } from 'scenes/insights/InsightTooltip/insightTooltipUtils'

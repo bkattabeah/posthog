@@ -1,4 +1,5 @@
 import type { Series, TimeSeriesLineChartConfig, TooltipConfig } from '@posthog/quill-charts'
+
 import type { SeriesDatum } from 'scenes/insights/InsightTooltip/insightTooltipUtils'
 import {
     buildTrendsLineTimeSeriesConfig,
