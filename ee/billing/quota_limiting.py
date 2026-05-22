@@ -189,6 +189,14 @@ def is_team_limited(team_api_token: str, resource: QuotaResource, cache_key: Quo
     return team_api_token in limited_team_attributes
 
 
+def is_team_over_ai_credit_budget(team_api_token: str) -> bool:
+    """Whether the team has exhausted its AI credit budget, per the billing quota-limiting cache —
+    the same signal the chat assistant enforces (ee/api/conversation.py). Shared by every
+    LLM-spending subscription path (AI reports, AI summaries) so the resource + cache-key pair lives
+    in one place. Reads an in-process-cached Redis set; async callers should wrap it in sync_to_async."""
+    return is_team_limited(team_api_token, QuotaResource.AI_CREDITS, QuotaLimitingCaches.QUOTA_LIMITER_CACHE_KEY)
+
+
 # -------------------------------------------------------------------------------------------------
 # MAIN FUNCTIONS
 # -------------------------------------------------------------------------------------------------
