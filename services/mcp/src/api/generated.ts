@@ -5177,6 +5177,8 @@ export namespace Schemas {
 
     /**
      * * `S3` - S3
+    * `AwsS3` - Aws S3
+    * `S3Compatible` - S3 Compatible
     * `Snowflake` - Snowflake
     * `Postgres` - Postgres
     * `Redshift` - Redshift
@@ -5193,6 +5195,8 @@ export namespace Schemas {
 
     export const BatchExportDestinationTypeEnum = {
       S3: 'S3',
+      AwsS3: 'AwsS3',
+      S3Compatible: 'S3Compatible',
       Snowflake: 'Snowflake',
       Postgres: 'Postgres',
       Redshift: 'Redshift',
@@ -5272,6 +5276,8 @@ export namespace Schemas {
       /** A choice of supported BatchExportDestination types.
 
       * `S3` - S3
+      * `AwsS3` - Aws S3
+      * `S3Compatible` - S3 Compatible
       * `Snowflake` - Snowflake
       * `Postgres` - Postgres
       * `Redshift` - Redshift
