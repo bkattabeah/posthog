@@ -648,7 +648,7 @@ class TestObserveActionFeatureFlag(APIBaseTest):
             self.assertEqual(resp.status_code, 404)
 
 
-class TestReplayLensEstimateAction(ClickhouseTestMixin, _VisionAPITestCase):
+class TestReplayScannerEstimateAction(ClickhouseTestMixin, _VisionAPITestCase):
     @property
     def estimate_url(self) -> str:
         return f"{self.lenses_url}estimate/"
@@ -667,8 +667,6 @@ class TestReplayLensEstimateAction(ClickhouseTestMixin, _VisionAPITestCase):
         [
             ("sampling_rate_above_one", {"sampling_rate": 1.5}),
             ("sampling_rate_negative", {"sampling_rate": -0.1}),
-            ("window_days_zero", {"window_days": 0}),
-            ("window_days_above_max", {"window_days": 91}),
         ]
     )
     def test_estimate_rejects_invalid_input(self, _name: str, payload: dict[str, Any]) -> None:
@@ -678,21 +676,24 @@ class TestReplayLensEstimateAction(ClickhouseTestMixin, _VisionAPITestCase):
     def test_estimate_counts_only_in_window_sessions(self) -> None:
         for index in range(3):
             self._ingest_session(f"in-window-{index}", days_ago=index + 1)
-        self._ingest_session("out-of-window", days_ago=20)
+        self._ingest_session("out-of-window", days_ago=40)
 
-        resp = self.client.post(self.estimate_url, data={"window_days": 7}, format="json")
+        resp = self.client.post(self.estimate_url, data={}, format="json")
         self.assertEqual(resp.status_code, 200)
 
         body = resp.json()
         self.assertEqual(body["matched_sessions_in_window"], 3)
-        self.assertAlmostEqual(body["estimated_sessions_per_day"], 3 / body["window_days"])
-        self.assertEqual(body["estimated_observations_per_month"], round(body["estimated_sessions_per_day"] * 30))
+        self.assertEqual(body["window_days"], 30)
+        self.assertEqual(
+            body["estimated_observations_per_month"],
+            round(body["matched_sessions_in_window"] / body["window_days"] * 30),
+        )
 
     def test_estimate_applies_sampling(self) -> None:
         for index in range(4):
             self._ingest_session(f"sampled-{index}", days_ago=index + 1)
 
-        resp = self.client.post(self.estimate_url, data={"window_days": 7, "sampling_rate": 0.5}, format="json")
+        resp = self.client.post(self.estimate_url, data={"sampling_rate": 0.5}, format="json")
         self.assertEqual(resp.status_code, 200)
 
         body = resp.json()
@@ -700,5 +701,5 @@ class TestReplayLensEstimateAction(ClickhouseTestMixin, _VisionAPITestCase):
         self.assertEqual(body["sampling_rate"], 0.5)
         self.assertEqual(
             body["estimated_observations_per_month"],
-            round(body["estimated_sessions_per_day"] * 30 * 0.5),
+            round(body["matched_sessions_in_window"] / body["window_days"] * 30 * 0.5),
         )
