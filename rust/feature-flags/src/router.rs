@@ -103,9 +103,9 @@ pub struct State {
     pub auth_token_cache: Arc<ReadThroughCacheWithMetrics>,
     /// Provider for realtime/behavioral cohort membership lookups
     pub cohort_membership_provider: Arc<dyn CohortMembershipProvider>,
-    /// Shadow-keyspace billing aggregator. See `crate::billing` for the
-    /// dual-write contract.
-    pub billing_aggregator: Option<Arc<BillingAggregator>>,
+    /// Authoritative writer for the production billing keyspace. See
+    /// `crate::billing` for the aggregation/flush contract.
+    pub billing_aggregator: Arc<BillingAggregator>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -130,7 +130,7 @@ pub fn router(
     team_negative_cache: NegativeCache,
     auth_token_cache: Arc<ReadThroughCacheWithMetrics>,
     cohort_membership_provider: Arc<dyn CohortMembershipProvider>,
-    billing_aggregator: Option<Arc<BillingAggregator>>,
+    billing_aggregator: Arc<BillingAggregator>,
     config: Config,
 ) -> Router {
     // Initialize flag definitions rate limiter with default and custom team rates

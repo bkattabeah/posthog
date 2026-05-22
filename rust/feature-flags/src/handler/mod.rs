@@ -267,8 +267,7 @@ async fn process_request_inner(
                         team.id,
                         metrics_data.library,
                         is_internal,
-                    )
-                    .await;
+                    );
                 }
 
                 response
