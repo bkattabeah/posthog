@@ -136,7 +136,11 @@ class DashboardTile(models.Model):
             update_fields = list(update_fields)
             kwargs["update_fields"] = update_fields
 
-        if self.team_id is None and self.dashboard_id is not None:
+        # team is non-nullable at the DB level, but a freshly-constructed instance
+        # can still have `team_id is None` here before INSERT — Django's NOT NULL
+        # is enforced on write, not on the Python attribute. Mypy infers the
+        # field as non-Optional from the model, so silence the unreachable warning.
+        if self.team_id is None and self.dashboard_id is not None:  # type: ignore[unreachable]
             self.team_id = self.dashboard.team_id
             if update_fields is not None:
                 update_fields.append("team_id")
