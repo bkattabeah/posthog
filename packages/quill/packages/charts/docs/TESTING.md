@@ -21,7 +21,7 @@ kea-test-utils) and read the chart with `getHogChart(scope)`:
 
 ```tsx
 import { render } from '@testing-library/react'
-import { ensureJsdom, getHogChart, hoverAtIndex, waitForHogChartTooltip } from 'lib/hog-charts/testing'
+import { ensureJsdom, getHogChart, hoverAtIndex, waitForHogChartTooltip } from '@posthog/quill-charts/testing'
 
 ensureJsdom()
 

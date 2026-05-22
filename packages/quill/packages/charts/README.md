@@ -5,8 +5,8 @@ in-app chart that needs to render thousands of points smoothly. D3 powers the
 scales; the canvas does the drawing; React handles overlays.
 
 ```tsx
-import { LineChart } from 'lib/hog-charts'
-import type { ChartTheme, Series } from 'lib/hog-charts'
+import { LineChart } from '@posthog/quill-charts'
+import type { ChartTheme, Series } from '@posthog/quill-charts'
 
 const SERIES: Series[] = [{ key: 'a', label: 'A', data: [10, 20, 30] }]
 const LABELS = ['Mon', 'Tue', 'Wed']

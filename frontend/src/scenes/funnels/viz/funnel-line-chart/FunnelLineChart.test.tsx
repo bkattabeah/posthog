@@ -3,7 +3,7 @@ import '@testing-library/jest-dom'
 import { cleanup, screen, waitFor } from '@testing-library/react'
 
 import { FEATURE_FLAGS } from 'lib/constants'
-import { ensureJsdom, waitForHogChartTooltip } from 'lib/hog-charts/testing'
+import { ensureJsdom, waitForHogChartTooltip } from '@posthog/quill-charts/testing'
 import { FUNNEL_CONVERSION_SERIES_LABEL } from 'scenes/funnels/viz/shared/funnelSeriesMeta'
 
 import { buildFunnelsQuery, chart, getHogChart, personsModal, renderInsight } from '~/test/insight-testing'

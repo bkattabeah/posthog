@@ -10,8 +10,8 @@ import {
     ReferenceLines,
     TimeSeriesBarChart,
     ValueLabels,
-} from 'lib/hog-charts'
-import type { BarChartConfig, PointClickData, TimeSeriesBarChartConfig, TooltipContext } from 'lib/hog-charts'
+} from '@posthog/quill-charts'
+import type { BarChartConfig, PointClickData, TimeSeriesBarChartConfig, TooltipContext } from '@posthog/quill-charts'
 import { formatPercentStackAxisValue } from 'scenes/insights/aggregationAxisFormat'
 import { InsightEmptyState } from 'scenes/insights/EmptyStates'
 import { insightLogic } from 'scenes/insights/insightLogic'
