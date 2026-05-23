@@ -10,6 +10,7 @@ from parameterized import parameterized
 from temporalio.exceptions import WorkflowAlreadyStartedError
 
 from posthog.models import Organization, Team
+from posthog.models.utils import uuid7
 from posthog.session_recordings.queries.test.session_replay_sql import produce_replay_summary
 
 from products.replay_vision.backend.models.replay_observation import (
@@ -354,7 +355,7 @@ class TestReplayScannerViewSetFeatureFlag(APIBaseTest):
 
     @patch("products.replay_vision.backend.feature_flag.posthoganalytics.feature_enabled", return_value=False)
     def test_flag_off_returns_404_on_estimate(self, _flag_mock) -> None:
-        resp = self.client.post(f"{self.lenses_url}estimate/", data={}, format="json")
+        resp = self.client.post(f"{self.scanners_url}estimate/", data={}, format="json")
         self.assertEqual(resp.status_code, 404)
 
 
@@ -651,13 +652,14 @@ class TestObserveActionFeatureFlag(APIBaseTest):
 class TestReplayScannerEstimateAction(ClickhouseTestMixin, _VisionAPITestCase):
     @property
     def estimate_url(self) -> str:
-        return f"{self.lenses_url}estimate/"
+        return f"{self.scanners_url}estimate/"
 
-    def _ingest_session(self, session_id: str, days_ago: float) -> None:
+    def _ingest_session(self, *, days_ago: float) -> None:
+        # HogQL skips non-UUIDv7 `$session_id` values, so the estimate query would return 0 for them.
         first_timestamp = timezone.now() - timedelta(days=days_ago)
         produce_replay_summary(
             team_id=self.team.pk,
-            session_id=session_id,
+            session_id=str(uuid7()),
             distinct_id="estimate-distinct-id",
             first_timestamp=first_timestamp,
             last_timestamp=first_timestamp + timedelta(minutes=5),
@@ -675,8 +677,8 @@ class TestReplayScannerEstimateAction(ClickhouseTestMixin, _VisionAPITestCase):
 
     def test_estimate_counts_only_in_window_sessions(self) -> None:
         for index in range(3):
-            self._ingest_session(f"in-window-{index}", days_ago=index + 1)
-        self._ingest_session("out-of-window", days_ago=40)
+            self._ingest_session(days_ago=index + 1)
+        self._ingest_session(days_ago=40)
 
         resp = self.client.post(self.estimate_url, data={}, format="json")
         self.assertEqual(resp.status_code, 200)
@@ -684,22 +686,19 @@ class TestReplayScannerEstimateAction(ClickhouseTestMixin, _VisionAPITestCase):
         body = resp.json()
         self.assertEqual(body["matched_sessions_in_window"], 3)
         self.assertEqual(body["window_days"], 30)
-        self.assertEqual(
-            body["estimated_observations_per_month"],
-            round(body["matched_sessions_in_window"] / body["window_days"] * 30),
-        )
+        self.assertEqual(body["estimated_observations_per_month"], 3)
 
     def test_estimate_applies_sampling(self) -> None:
         for index in range(4):
-            self._ingest_session(f"sampled-{index}", days_ago=index + 1)
+            self._ingest_session(days_ago=index + 1)
+        # Anchor 40 days back so `window_days` clamps to a deterministic 30, not the recent data span.
+        self._ingest_session(days_ago=40)
 
         resp = self.client.post(self.estimate_url, data={"sampling_rate": 0.5}, format="json")
         self.assertEqual(resp.status_code, 200)
 
         body = resp.json()
         self.assertEqual(body["matched_sessions_in_window"], 4)
+        self.assertEqual(body["window_days"], 30)
         self.assertEqual(body["sampling_rate"], 0.5)
-        self.assertEqual(
-            body["estimated_observations_per_month"],
-            round(body["matched_sessions_in_window"] / body["window_days"] * 30 * 0.5),
-        )
+        self.assertEqual(body["estimated_observations_per_month"], 2)
