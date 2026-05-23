@@ -378,6 +378,7 @@ def github_link_complete(request: HttpRequest):
     """GitHub User OAuth redirect_uri entrypoint — delegates to the shared callback router."""
     return handle_oauth_redirect(request)
 
+
 def _resolve_team_for_github_start(user: User, request: Request):
     """Resolve which team to use for team-level GitHub install discovery.
 
