@@ -64,6 +64,10 @@ export interface Series<Meta = unknown> {
          *  When set, the area is drawn between `data` (top) and this (bottom) instead of
          *  filling down to the x-axis baseline. */
         lowerData?: number[]
+        /** Fade the fill vertically from the series color at the top of the plot to transparent
+         *  at the baseline. Ignored when `lowerData` is set or when the series uses dashed
+         *  `stroke.partial` (those branches need a solid fill / hatch). */
+        gradient?: boolean
     }
     /** Auxiliary overlay derived from primary data — trend lines and moving averages.
      *  Excluded from stack computation and from the y-axis baseline calculation, so a

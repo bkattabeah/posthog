@@ -72,6 +72,28 @@ function GoalLine() {
 </LineChart>
 ```
 
+## SparklineSummary
+
+A card-style summary that pairs a big formatted value with a sparkline. Hover
+moves the value/label/change pill to the hovered point; the headline number
+tweens between values.
+
+```tsx
+import { SparklineSummary } from 'lib/hog-charts'
+
+;<SparklineSummary
+  title="Total Revenue"
+  data={[4200, 5100, 4700, /* … */ 8800]}
+  labels={['Jan', 'Feb', 'Mar', /* … */ 'Dec']}
+  theme={THEME}
+  formatValue={(v) => `US$${Math.round(v).toLocaleString()}`}
+/>
+```
+
+The change pill compares the current point to the first non-zero value in the
+series. Pass `showChange={false}` to hide it, or `formatChange` to customize
+the percentage label.
+
 ## More
 
 - Building a new chart type, library architecture, conventions →
