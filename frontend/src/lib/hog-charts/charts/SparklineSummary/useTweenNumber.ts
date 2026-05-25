@@ -1,14 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
-/**
- * Tweens a number toward `target` over `duration` ms using ease-out cubic.
- * When `target` changes mid-tween, the animation restarts from the current
- * displayed value — no snap. Cleans up its RAF on unmount.
- */
+import { useLatest } from '../../core/hooks/useLatest'
+
+/** Mid-tween restarts from the currently-displayed value (no snap). */
 export function useTweenNumber(target: number, duration = 350): number {
     const [value, setValue] = useState(target)
-    const valueRef = useRef(target)
-    valueRef.current = value
+    const valueRef = useLatest(value)
 
     useEffect(() => {
         if (duration <= 0 || !Number.isFinite(target)) {
@@ -31,7 +28,7 @@ export function useTweenNumber(target: number, duration = 350): number {
         }
         raf = requestAnimationFrame(tick)
         return () => cancelAnimationFrame(raf)
-    }, [target, duration])
+    }, [target, duration, valueRef])
 
     return value
 }
