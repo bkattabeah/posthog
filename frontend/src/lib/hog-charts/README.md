@@ -80,7 +80,6 @@ tweens between values.
 
 ```tsx
 import { SparklineSummary } from 'lib/hog-charts'
-
 ;<SparklineSummary
   title="Total Revenue"
   data={[4200, 5100, 4700, /* … */ 8800]}
