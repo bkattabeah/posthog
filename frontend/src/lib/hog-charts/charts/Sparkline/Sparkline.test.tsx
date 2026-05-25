@@ -22,9 +22,7 @@ describe('Sparkline', () => {
     })
 
     it('renders a canvas for the line chart', () => {
-        const { container } = renderHogChart(
-            <Sparkline data={[100, 200, 300, 400]} labels={LABELS} theme={THEME} />
-        )
+        const { container } = renderHogChart(<Sparkline data={[100, 200, 300, 400]} labels={LABELS} theme={THEME} />)
         expect(container.querySelector('canvas')).not.toBeNull()
     })
 

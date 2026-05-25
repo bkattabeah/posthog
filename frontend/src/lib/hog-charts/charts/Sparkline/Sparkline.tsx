@@ -57,10 +57,7 @@ function SparklineInner({
     dataAttr,
 }: Omit<SparklineProps, 'onError'>): React.ReactElement {
     const resolvedColor = color ?? theme.colors[0]
-    const resolvedLabels = useMemo<string[]>(
-        () => labels ?? data.map((_, i) => String(i)),
-        [labels, data]
-    )
+    const resolvedLabels = useMemo<string[]>(() => labels ?? data.map((_, i) => String(i)), [labels, data])
     const series = useMemo<Series[]>(
         () => [
             {
