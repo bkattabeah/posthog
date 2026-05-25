@@ -16,7 +16,7 @@ import {
 import { combineUrl } from 'kea-router'
 import posthog from 'posthog-js'
 
-import { IconCursor, IconServer } from '@posthog/icons'
+import { IconCursor } from '@posthog/icons'
 
 import {
     buildAutocaptureSeriesShortcuts,
@@ -54,7 +54,6 @@ import {
     getEventDefinitionIcon,
     getPropertyDefinitionIcon,
 } from 'scenes/data-management/events/DefinitionHeader'
-import { dataWarehouseSettingsSceneLogic } from 'scenes/data-warehouse/settings/dataWarehouseSettingsSceneLogic'
 import {
     getProductEventFilterOptions,
     getProductEventPropertyFilterOptions,
@@ -65,7 +64,6 @@ import { teamLogic } from 'scenes/teamLogic'
 import { actionsModel } from '~/models/actionsModel'
 import { primaryEventPropertiesModel } from '~/models/primaryEventPropertiesModel'
 import { updatePropertyDefinitions } from '~/models/propertyDefinitionsModel'
-import { DatabaseSchemaField, DatabaseSchemaTable } from '~/queries/schema/schema-general'
 import { getCoreFilterDefinition } from '~/taxonomy/helpers'
 import { CORE_FILTER_DEFINITIONS_BY_GROUP } from '~/taxonomy/taxonomy'
 import {
@@ -79,12 +77,12 @@ import {
     TeamType,
 } from '~/types'
 
-import { joinsLogic } from 'products/data_warehouse/frontend/shared/logics/joinsLogic'
 import { HogFlowTaxonomicFilters } from 'products/workflows/frontend/Workflows/hogflows/filters/HogFlowTaxonomicFilters'
 
 import { PROPERTY_FILTER_TYPE_TO_TAXONOMIC_FILTER_GROUP_TYPE } from '../PropertyFilters/utils'
 import { apmTaxonomicGroupsLogic } from './apmTaxonomicGroupsLogic'
 import { cohortTaxonomicGroupsLogic } from './cohortTaxonomicGroupsLogic'
+import { dataWarehouseTaxonomicGroupsLogic } from './dataWarehouseTaxonomicGroupsLogic'
 import { errorTrackingTaxonomicGroupsLogic } from './errorTrackingTaxonomicGroupsLogic'
 import { eventMetadataTaxonomicGroupsLogic } from './eventMetadataTaxonomicGroupsLogic'
 import { groupAnalyticsTaxonomicGroupsLogic } from './groupAnalyticsTaxonomicGroupsLogic'
@@ -308,10 +306,6 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
             ['currentTeamId', 'currentTeam'],
             projectLogic,
             ['currentProjectId'],
-            dataWarehouseSettingsSceneLogic, // This logic needs to be connected to stop the popover from erroring out
-            ['dataWarehouseTables'],
-            joinsLogic,
-            ['columnsJoinedToPersons'],
             featureFlagLogic,
             ['featureFlags'],
             primaryEventPropertiesModel,
@@ -340,6 +334,8 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
             ['errorTrackingTaxonomicGroups'],
             revenueAnalyticsTaxonomicGroupsLogic,
             ['revenueAnalyticsTaxonomicGroups'],
+            dataWarehouseTaxonomicGroupsLogic,
+            ['dataWarehouseTaxonomicGroups'],
         ],
         actions: [primaryEventPropertiesModel, ['ensureLoadedForEvents']],
     })),
@@ -505,7 +501,6 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
                 }
             },
         ],
-        schemaColumns: [() => [(_, props) => props.schemaColumns], (schemaColumns) => schemaColumns ?? []],
         dataWarehousePopoverFields: [
             () => [(_, props) => props.dataWarehousePopoverFields],
             (dataWarehousePopoverFields) => dataWarehousePopoverFields ?? [],
@@ -541,8 +536,7 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
                 s.groupAnalyticsTaxonomicGroups,
                 s.groupAnalyticsTaxonomicGroupNames,
                 s.eventNamesWithPrimaryProperties,
-                s.schemaColumns,
-                (_, props) => props.schemaColumnsLoading,
+                s.dataWarehouseTaxonomicGroups,
                 s.hogQLExpressionTaxonomicGroups,
                 s.suggestedFiltersTaxonomicGroups,
                 s.propertyFilters,
@@ -566,8 +560,7 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
                     eventNames: string[]
                     primaryPropertiesForContextEvents: string[]
                 },
-                schemaColumns: DatabaseSchemaField[],
-                schemaColumnsLoading: boolean | undefined,
+                dataWarehouseTaxonomicGroups: TaxonomicFilterGroup[],
                 hogQLExpressionTaxonomicGroups: TaxonomicFilterGroup[],
                 suggestedFiltersTaxonomicGroups: TaxonomicFilterGroup[],
                 propertyFilters,
@@ -665,42 +658,7 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
                         getPopoverHeader: () => 'Action',
                         getIcon: getEventDefinitionIcon,
                     },
-                    {
-                        name: 'Data warehouse tables',
-                        searchPlaceholder: 'data warehouse tables',
-                        type: TaxonomicFilterGroupType.DataWarehouse,
-                        logic: dataWarehouseSettingsSceneLogic,
-                        value: 'dataWarehouseTablesAndViews',
-                        valueLoading: 'databaseLoading',
-                        getName: (table: DatabaseSchemaTable) => table.name,
-                        getValue: (table: DatabaseSchemaTable) => table.name,
-                        getPopoverHeader: () => 'Data Warehouse Table',
-                        getIcon: () => <IconServer />,
-                    },
-                    ...(schemaColumns.length > 0 || schemaColumnsLoading
-                        ? [
-                              {
-                                  name: 'Data warehouse properties',
-                                  searchPlaceholder: 'data warehouse properties',
-                                  type: TaxonomicFilterGroupType.DataWarehouseProperties,
-                                  options: schemaColumns,
-                                  getName: (col: DatabaseSchemaField) => col.name,
-                                  getValue: (col: DatabaseSchemaField) => col.name,
-                                  getPopoverHeader: () => 'Data Warehouse Column',
-                                  getIcon: () => <IconServer />,
-                              },
-                          ]
-                        : []),
-                    {
-                        name: 'Extended person properties',
-                        searchPlaceholder: 'extended person properties',
-                        type: TaxonomicFilterGroupType.DataWarehousePersonProperties,
-                        logic: joinsLogic,
-                        value: 'columnsJoinedToPersons',
-                        getName: (personProperty: PersonProperty) => personProperty.name,
-                        getValue: (personProperty: PersonProperty) => personProperty.id,
-                        getPopoverHeader: () => 'Extended Person Property',
-                    },
+                    ...dataWarehouseTaxonomicGroups,
                     {
                         name: 'Autocapture elements',
                         searchPlaceholder: 'autocapture elements',
