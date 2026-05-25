@@ -1497,9 +1497,18 @@ mod tests {
         let (captured, data) = assert_round_trip(&ev, &ctx);
         assert_eq!(captured.event, "$pageview");
         assert_eq!(captured.distinct_id, "user-42");
-        assert_eq!(data.properties["$current_url"], "https://app.example.com/dashboard");
-        assert_eq!(data.properties["$session_id"], "01jq9abc-def0-1234-5678-9abcdef01234");
-        assert_eq!(data.properties["$window_id"], "01jq9xyz-0000-4321-8765-fedcba987654");
+        assert_eq!(
+            data.properties["$current_url"],
+            "https://app.example.com/dashboard"
+        );
+        assert_eq!(
+            data.properties["$session_id"],
+            "01jq9abc-def0-1234-5678-9abcdef01234"
+        );
+        assert_eq!(
+            data.properties["$window_id"],
+            "01jq9xyz-0000-4321-8765-fedcba987654"
+        );
         assert_eq!(data.properties["$cookieless_mode"], false);
         assert_eq!(data.properties["$process_person_profile"], true);
     }
@@ -1537,10 +1546,10 @@ mod tests {
     fn round_trip_spread_destinations() {
         let ctx = serialize_ctx();
         for ev in &realistic_spread_destinations() {
-            if ev.result == EventResult::Ok || ev.result == EventResult::Limited {
-                if ev.adjusted_timestamp.is_some() {
-                    assert_round_trip(ev, &ctx);
-                }
+            if (ev.result == EventResult::Ok || ev.result == EventResult::Limited)
+                && ev.adjusted_timestamp.is_some()
+            {
+                assert_round_trip(ev, &ctx);
             }
         }
     }

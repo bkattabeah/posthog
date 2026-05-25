@@ -41,7 +41,6 @@ impl Serialize for BatchEntryStatus {
 /// order and are never reordered during processing).
 #[derive(Debug)]
 pub struct BatchResponse {
-    pub request_id: Uuid,
     pub has_retry: bool,
     entries: Vec<(Uuid, BatchEntryStatus)>,
 }
@@ -50,6 +49,7 @@ impl BatchResponse {
     /// Build the response from a processed batch of WrappedEvents.
     /// Call this after sink publishing and result merging are complete.
     pub fn build(ctx: &Context, events: &[WrappedEvent]) -> Self {
+        let _ = ctx; // Context reserved for future per-response metadata
         let mut has_retry = false;
         let entries: Vec<(Uuid, BatchEntryStatus)> = events
             .iter()
@@ -67,11 +67,7 @@ impl BatchResponse {
             })
             .collect();
 
-        Self {
-            request_id: ctx.request_id,
-            has_retry,
-            entries,
-        }
+        Self { has_retry, entries }
     }
 
     pub fn entries(&self) -> &[(Uuid, BatchEntryStatus)] {
@@ -114,10 +110,6 @@ impl IntoResponse for BatchResponse {
             header::CONTENT_TYPE,
             HeaderValue::from_static("application/json"),
         );
-
-        if let Ok(val) = HeaderValue::from_str(&self.request_id.to_string()) {
-            headers.insert("PostHog-Request-Id", val);
-        }
 
         if self.has_retry {
             headers.insert(header::RETRY_AFTER, DEFAULT_RETRY_AFTER_SECS);
@@ -295,18 +287,6 @@ mod tests {
             resp.headers().get(header::CONTENT_TYPE).unwrap(),
             "application/json"
         );
-    }
-
-    #[tokio::test]
-    async fn into_response_echoes_request_id() {
-        let ctx = test_utils::test_context();
-        let events = vec![make_wrapped(EventResult::Ok, None)];
-        let resp = BatchResponse::build(&ctx, &events).into_response();
-        let hdr = resp
-            .headers()
-            .get("PostHog-Request-Id")
-            .expect("PostHog-Request-Id header should be present");
-        assert_eq!(hdr.to_str().unwrap(), ctx.request_id.to_string());
     }
 
     #[tokio::test]

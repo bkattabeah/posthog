@@ -112,16 +112,11 @@ pub async fn process_batch(
 /// - `Outcome::Success` → keep existing result (Ok or Limited)
 /// - `Outcome::RetriableError` | `Outcome::Timeout` → `EventResult::Retry`
 /// - `Outcome::FatalError` → `EventResult::Drop`
-pub fn merge_sink_results(
-    events: &mut [WrappedEvent],
-    sink_results: &[Box<dyn SinkResult>],
-) {
+pub fn merge_sink_results(events: &mut [WrappedEvent], sink_results: &[Box<dyn SinkResult>]) {
     use crate::v1::sinks::types::Outcome;
 
-    let results_by_uuid: HashMap<Uuid, &dyn SinkResult> = sink_results
-        .iter()
-        .map(|r| (r.key(), r.as_ref()))
-        .collect();
+    let results_by_uuid: HashMap<Uuid, &dyn SinkResult> =
+        sink_results.iter().map(|r| (r.key(), r.as_ref())).collect();
 
     for event in events.iter_mut() {
         if !event.should_publish() {
@@ -2248,8 +2243,8 @@ mod tests {
         let mut ctx = test_utils::test_context();
         ctx.created_at = None;
 
-        let mut events = vec![wrapped_event("$pageview", "user-1")
-            .with_destination(Destination::Overflow)];
+        let mut events =
+            vec![wrapped_event("$pageview", "user-1").with_destination(Destination::Overflow)];
 
         let event_refs: Vec<&(dyn crate::v1::sinks::event::Event + Send + Sync)> = events
             .iter()
