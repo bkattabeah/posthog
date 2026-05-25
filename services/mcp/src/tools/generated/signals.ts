@@ -145,27 +145,6 @@ const inboxSourceConfigsRetrieve = (): ToolBase<
     },
 })
 
-const SignalsScoutProjectProfileGetSchema = SignalsScoutProjectProfileGetQueryParams
-
-const signalsScoutProjectProfileGet = (): ToolBase<
-    typeof SignalsScoutProjectProfileGetSchema,
-    Schemas.ProjectProfile
-> => ({
-    name: 'signals-scout-project-profile-get',
-    schema: SignalsScoutProjectProfileGetSchema,
-    handler: async (context: Context, params: z.infer<typeof SignalsScoutProjectProfileGetSchema>) => {
-        const projectId = await context.stateManager.getProjectId()
-        const result = await context.api.request<Schemas.ProjectProfile>({
-            method: 'GET',
-            path: `/api/projects/${encodeURIComponent(String(projectId))}/signals/scout/project_profile/current/`,
-            query: {
-                force_refresh: params.force_refresh,
-            },
-        })
-        return result
-    },
-})
-
 const SignalsScoutEmitSignalSchema = SignalsScoutEmitSignalParams.omit({ project_id: true }).extend(
     SignalsScoutEmitSignalBody.shape
 )
@@ -215,6 +194,27 @@ const signalsScoutEmitSignal = (): ToolBase<typeof SignalsScoutEmitSignalSchema,
     },
 })
 
+const SignalsScoutProjectProfileGetSchema = SignalsScoutProjectProfileGetQueryParams
+
+const signalsScoutProjectProfileGet = (): ToolBase<
+    typeof SignalsScoutProjectProfileGetSchema,
+    Schemas.ProjectProfile
+> => ({
+    name: 'signals-scout-project-profile-get',
+    schema: SignalsScoutProjectProfileGetSchema,
+    handler: async (context: Context, params: z.infer<typeof SignalsScoutProjectProfileGetSchema>) => {
+        const projectId = await context.stateManager.getProjectId()
+        const result = await context.api.request<Schemas.ProjectProfile>({
+            method: 'GET',
+            path: `/api/projects/${encodeURIComponent(String(projectId))}/signals/scout/project_profile/current/`,
+            query: {
+                force_refresh: params.force_refresh,
+            },
+        })
+        return result
+    },
+})
+
 const SignalsScoutRunsListSchema = SignalsScoutRunsListQueryParams
 
 const signalsScoutRunsList = (): ToolBase<
@@ -254,6 +254,29 @@ const signalsScoutRunsRetrieve = (): ToolBase<typeof SignalsScoutRunsRetrieveSch
     },
 })
 
+const SignalsScoutScratchpadForgetSchema = SignalsScoutScratchpadForgetBody
+
+const signalsScoutScratchpadForget = (): ToolBase<
+    typeof SignalsScoutScratchpadForgetSchema,
+    Schemas.ForgetResponse
+> => ({
+    name: 'signals-scout-scratchpad-forget',
+    schema: SignalsScoutScratchpadForgetSchema,
+    handler: async (context: Context, params: z.infer<typeof SignalsScoutScratchpadForgetSchema>) => {
+        const projectId = await context.stateManager.getProjectId()
+        const body: Record<string, unknown> = {}
+        if (params.key !== undefined) {
+            body['key'] = params.key
+        }
+        const result = await context.api.request<Schemas.ForgetResponse>({
+            method: 'POST',
+            path: `/api/projects/${encodeURIComponent(String(projectId))}/signals/scout/scratchpad/forget/`,
+            body,
+        })
+        return result
+    },
+})
+
 const SignalsScoutScratchpadRememberSchema = SignalsScoutScratchpadRememberBody
 
 const signalsScoutScratchpadRemember = (): ToolBase<
@@ -277,29 +300,6 @@ const signalsScoutScratchpadRemember = (): ToolBase<
         const result = await context.api.request<Schemas.ScratchpadEntry>({
             method: 'POST',
             path: `/api/projects/${encodeURIComponent(String(projectId))}/signals/scout/scratchpad/`,
-            body,
-        })
-        return result
-    },
-})
-
-const SignalsScoutScratchpadForgetSchema = SignalsScoutScratchpadForgetBody
-
-const signalsScoutScratchpadForget = (): ToolBase<
-    typeof SignalsScoutScratchpadForgetSchema,
-    Schemas.ForgetResponse
-> => ({
-    name: 'signals-scout-scratchpad-forget',
-    schema: SignalsScoutScratchpadForgetSchema,
-    handler: async (context: Context, params: z.infer<typeof SignalsScoutScratchpadForgetSchema>) => {
-        const projectId = await context.stateManager.getProjectId()
-        const body: Record<string, unknown> = {}
-        if (params.key !== undefined) {
-            body['key'] = params.key
-        }
-        const result = await context.api.request<Schemas.ForgetResponse>({
-            method: 'POST',
-            path: `/api/projects/${encodeURIComponent(String(projectId))}/signals/scout/scratchpad/forget/`,
             body,
         })
         return result
@@ -333,11 +333,11 @@ export const GENERATED_TOOLS: Record<string, () => ToolBase<ZodObjectAny>> = {
     'inbox-reports-retrieve': inboxReportsRetrieve,
     'inbox-source-configs-list': inboxSourceConfigsList,
     'inbox-source-configs-retrieve': inboxSourceConfigsRetrieve,
-    'signals-scout-project-profile-get': signalsScoutProjectProfileGet,
     'signals-scout-emit-signal': signalsScoutEmitSignal,
+    'signals-scout-project-profile-get': signalsScoutProjectProfileGet,
     'signals-scout-runs-list': signalsScoutRunsList,
     'signals-scout-runs-retrieve': signalsScoutRunsRetrieve,
-    'signals-scout-scratchpad-remember': signalsScoutScratchpadRemember,
     'signals-scout-scratchpad-forget': signalsScoutScratchpadForget,
+    'signals-scout-scratchpad-remember': signalsScoutScratchpadRemember,
     'signals-scout-scratchpad-search': signalsScoutScratchpadSearch,
 }
