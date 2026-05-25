@@ -20,11 +20,22 @@ export interface SparklineSummaryProps {
     formatChange?: (percent: number) => string
     /** Whether to show the change pill. */
     showChange?: boolean
+    /** Colors for the change pill when the value rose vs. fell. */
+    positiveColor?: ChangeColor
+    negativeColor?: ChangeColor
     animationMs?: number
     className?: string
     dataAttr?: string
     onError?: (error: Error, info: React.ErrorInfo) => void
 }
+
+export interface ChangeColor {
+    background: string
+    foreground: string
+}
+
+const DEFAULT_POSITIVE_COLOR: ChangeColor = { background: 'rgb(56 134 0 / 10%)', foreground: '#388600' }
+const DEFAULT_NEGATIVE_COLOR: ChangeColor = { background: 'rgb(219 55 7 / 10%)', foreground: '#db3707' }
 
 const DEFAULT_FORMAT_VALUE = (v: number): string => v.toLocaleString()
 const DEFAULT_FORMAT_CHANGE = (p: number): string => {
@@ -58,6 +69,8 @@ function SparklineSummaryInner({
     formatValue = DEFAULT_FORMAT_VALUE,
     formatChange = DEFAULT_FORMAT_CHANGE,
     showChange = true,
+    positiveColor = DEFAULT_POSITIVE_COLOR,
+    negativeColor = DEFAULT_NEGATIVE_COLOR,
     animationMs = 350,
     className,
     dataAttr,
@@ -97,7 +110,11 @@ function SparklineSummaryInner({
             <div className="flex items-start justify-between gap-2">
                 <div className="text-sm font-medium">{title}</div>
                 {showChange && changePercent != null && Number.isFinite(changePercent) && (
-                    <ChangePill positive={isPositive} label={formatChange(changePercent)} />
+                    <ChangePill
+                        positive={isPositive}
+                        label={formatChange(changePercent)}
+                        colors={isPositive ? positiveColor : negativeColor}
+                    />
                 )}
             </div>
 
@@ -125,13 +142,14 @@ function HoverWatcher({ onHoverChange }: { onHoverChange: (i: number) => void })
 interface ChangePillProps {
     positive: boolean
     label: string
+    colors: ChangeColor
 }
 
-function ChangePill({ positive, label }: ChangePillProps): React.ReactElement {
-    const cls = positive ? 'bg-success-highlight text-success' : 'bg-danger-highlight text-danger'
+function ChangePill({ positive, label, colors }: ChangePillProps): React.ReactElement {
     return (
         <div
-            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${cls}`}
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-colors"
+            style={{ background: colors.background, color: colors.foreground }}
         >
             <Chevron up={positive} />
             <span className="tabular-nums">{label}</span>
