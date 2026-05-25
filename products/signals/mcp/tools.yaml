@@ -149,9 +149,10 @@ tools:
             idempotent: true
         title: Emit a finding for a run
         description: >
-            Persist a finding to `SignalScoutRun.findings` and fire `emit_signal` with `source_product = signals_scout`.
-            Idempotent on `(run_id, finding_id)` — a second call with the same `finding_id` short-circuits without
-            re-firing the pipeline. Honors the team's `shadow_mode` flag.
+            Fire `emit_signal` with `source_product = signals_scout`, creating the downstream `Signal` /
+            `SignalReport` rows for the inbox. Idempotent on `(run_id, finding_id)` via the deterministic
+            `Signal.source_id = run:<id>:finding:<id>` — a second call with the same `finding_id` short-circuits
+            without re-firing the pipeline.
     signals-scout-runs-list:
         operation: signals_scout_runs_list
         enabled: true
@@ -177,8 +178,10 @@ tools:
             idempotent: true
         title: Get a scout run by ID
         description: >
-            Return the full `SignalScoutRun` row including `summary`, `findings`, `hypotheses_considered`,
-            `run_metrics`, and `metadata`. Strictly team-scoped — a UUID belonging to another team returns 404.
+            Return the full `SignalScoutRun` row: `run_id`, `skill_name`, `skill_version`, `status`,
+            `started_at` / `completed_at` (from the linked TaskRun), the `task_id` / `task_run_id` / `task_url`
+            deep-links, and the end-of-run `summary`. Emitted findings are separate `Signal` / `SignalReport`
+            rows, not fields on this row. Strictly team-scoped — a UUID belonging to another team returns 404.
     signals-scout-scratchpad-remember:
         operation: signals_scout_scratchpad_remember
         enabled: true
