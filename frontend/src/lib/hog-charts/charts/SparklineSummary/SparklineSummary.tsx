@@ -108,7 +108,15 @@ function SparklineSummaryInner({
 
             <div className="mt-1 text-sm text-muted">{labels[activeIndex] ?? ' '}</div>
 
-            <div style={{ marginTop: 16, height: chartHeight, position: 'relative' }}>
+            <div
+                style={{
+                    marginTop: 16,
+                    height: chartHeight,
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}
+            >
                 <LineChart
                     series={series}
                     labels={labels}
