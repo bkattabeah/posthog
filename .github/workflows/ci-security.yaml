@@ -19,7 +19,7 @@ env:
 
 jobs:
     ensure-pinned-actions:
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 15
         steps:
             - name: Checkout code
@@ -31,7 +31,7 @@ jobs:
                       PostHog/
 
     semgrep-python:
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 15
         container:
             image: semgrep/semgrep:1.163.0@sha256:7cad2bc2d1e44f87f0bf4be6d1fa23aa90fb72015bebc89fb91385d813987a03
@@ -57,7 +57,7 @@ jobs:
                     bin/ common/ ee/ frontend/ posthog/ products/ services/llm-gateway/ services/stripe-mock/
 
     semgrep-go:
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         container:
             image: semgrep/semgrep:1.163.0@sha256:7cad2bc2d1e44f87f0bf4be6d1fa23aa90fb72015bebc89fb91385d813987a03
@@ -81,7 +81,7 @@ jobs:
                     livestream/
 
     semgrep-rust:
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         container:
             image: semgrep/semgrep:1.163.0@sha256:7cad2bc2d1e44f87f0bf4be6d1fa23aa90fb72015bebc89fb91385d813987a03
@@ -107,7 +107,7 @@ jobs:
                     cli/ rust/
 
     semgrep-js:
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 10
         container:
             image: semgrep/semgrep:1.163.0@sha256:7cad2bc2d1e44f87f0bf4be6d1fa23aa90fb72015bebc89fb91385d813987a03
@@ -130,7 +130,7 @@ jobs:
                     frontend/ nodejs/ services/mcp/ services/oauth-proxy/ services/stripe-app/
 
     semgrep-products-frontend:
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 10
         container:
             image: semgrep/semgrep:1.163.0@sha256:7cad2bc2d1e44f87f0bf4be6d1fa23aa90fb72015bebc89fb91385d813987a03
@@ -154,7 +154,7 @@ jobs:
 
     # scans GitHub Actions and other repo-wide config
     semgrep-general:
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 10
         container:
             image: semgrep/semgrep:1.163.0@sha256:7cad2bc2d1e44f87f0bf4be6d1fa23aa90fb72015bebc89fb91385d813987a03
@@ -197,7 +197,7 @@ jobs:
     #   - ERROR-severity rules fail the job on any finding (regression guards).
     # See `.semgrep/devex-rules/README.md`.
     semgrep-devex:
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 10
         container:
             image: semgrep/semgrep:1.163.0@sha256:7cad2bc2d1e44f87f0bf4be6d1fa23aa90fb72015bebc89fb91385d813987a03
@@ -231,7 +231,7 @@ jobs:
                     bin/ common/ ee/ frontend/ posthog/ products/
 
     semgrep-test-rules:
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         container:
             image: semgrep/semgrep:1.163.0@sha256:7cad2bc2d1e44f87f0bf4be6d1fa23aa90fb72015bebc89fb91385d813987a03
@@ -255,7 +255,7 @@ jobs:
             - semgrep-devex
             - semgrep-test-rules
         name: Semgrep Checks Pass
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         if: always()
         steps:

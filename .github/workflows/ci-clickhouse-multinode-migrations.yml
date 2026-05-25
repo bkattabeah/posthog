@@ -27,7 +27,7 @@ permissions:
 jobs:
     multinode-migration-smoke:
         name: Run ClickHouse migrations against per-cluster topology
-        runs-on: ubuntu-24.04
+        runs-on: posthog-hetzner-4
         timeout-minutes: 25
         env:
             DEBUG: '1'

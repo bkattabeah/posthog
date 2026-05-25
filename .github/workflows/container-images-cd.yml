@@ -22,7 +22,7 @@ jobs:
     posthog_build:
         name: Build and push PostHog
         if: github.repository == 'PostHog/posthog'
-        runs-on: depot-ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 30
         permissions:
             id-token: write # allow issuing OIDC tokens for this workflow run
@@ -41,9 +41,6 @@ jobs:
             - name: Set up QEMU
               uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
 
-            - name: Set up Depot CLI
-              uses: depot/setup-action@15c09a5f77a0840ad4bce955686522a257853461 # v1.7.1
-
             - name: Docker meta and registry login
               id: docker-meta
               uses: ./.github/actions/docker-meta
@@ -58,9 +55,8 @@ jobs:
 
             - name: Build and push container image
               id: build
-              uses: depot/build-push-action@5f3b3c2e5a00f0093de47f657aeaefcedff27d18 # v1.17.0
+              uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
               with:
-                  buildx-fallback: false # the fallback is so slow it's better to just fail
                   push: true
                   tags: ${{ steps.docker-meta.outputs.tags }}
                   labels: ${{ steps.docker-meta.outputs.labels }}
@@ -70,6 +66,10 @@ jobs:
                       BUILDKIT_CONTEXT_KEEP_GIT_DIR=1
                   secrets: |
                       posthog_upload_sourcemaps_cli_api_key=${{ secrets.POSTHOG_UPLOAD_SOURCEMAPS_CLI_API_KEY }}
+                  cache-from: |
+                    type=gha,scope=posthog-${{ github.ref_name }}
+                    type=gha,scope=posthog
+                  cache-to: ${{ github.ref == 'refs/heads/master' && 'type=gha,scope=posthog,mode=max' || format('type=gha,scope=posthog-{0},mode=max', github.ref_name) }}
 
             - name: report failure
               if: failure()

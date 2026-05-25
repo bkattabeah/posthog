@@ -10,7 +10,7 @@ permissions:
 
 jobs:
     stale:
-        runs-on: ubuntu-24.04
+        runs-on: posthog-hetzner-4
         timeout-minutes: 10
         steps:
             - name: Check if holiday period

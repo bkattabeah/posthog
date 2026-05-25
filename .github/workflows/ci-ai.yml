@@ -11,7 +11,7 @@ jobs:
     eval:
         timeout-minutes: 45
         name: AI evals / ${{ matrix.group }}
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         # Skipping on forks as Braintrust credentials are not available there
         if: |
             github.repository == 'PostHog/posthog' && contains(github.event.pull_request.labels.*.name, 'evals-ready')
@@ -142,7 +142,7 @@ jobs:
     eval-summary:
         timeout-minutes: 5
         name: AI evals / summary
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         needs: eval
         if: always() && needs.eval.result != 'skipped'
 

@@ -17,7 +17,7 @@ permissions:
 jobs:
     check-posthog-js:
         name: Check for posthog-js updates
-        runs-on: ubuntu-24.04
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
 
         # Skip forks for security - they could manipulate package.json to trigger unwanted reviews

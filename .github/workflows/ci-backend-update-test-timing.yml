@@ -26,7 +26,7 @@ permissions:
 jobs:
     collect-and-merge:
         name: Collect timing data from CI artifacts
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 10
         steps:
             - name: Get app token

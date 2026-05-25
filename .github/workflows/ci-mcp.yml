@@ -15,7 +15,7 @@ permissions:
 
 jobs:
     changes:
-        runs-on: ubuntu-24.04
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         name: Determine need to run MCP checks
         outputs:
@@ -81,7 +81,7 @@ jobs:
                         - '.github/workflows/mcp-publish.yml'
     build:
         name: Build Package
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 10
         needs: changes
         if: needs.changes.outputs.mcp == 'true'
@@ -157,7 +157,7 @@ jobs:
 
     unit-tests:
         name: Unit Tests
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 10
         needs: changes
         if: needs.changes.outputs.mcp == 'true'
@@ -234,8 +234,8 @@ jobs:
                   if-no-files-found: ignore
 
     integration-tests:
-        name: Integration Tests (depot-ubuntu-latest-4)
-        runs-on: depot-ubuntu-latest-4
+        name: Integration Tests (posthog-hetzner-4)
+        runs-on: posthog-hetzner-4
         needs: changes
         timeout-minutes: 30
         if: needs.changes.outputs.mcp == 'true'
@@ -572,7 +572,7 @@ jobs:
 
     handle-snapshots:
         name: Commit snapshot changes
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         needs: [changes, unit-tests]
         if: ${{ always() && needs.changes.outputs.mcp == 'true' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && !contains(github.actor, '[bot]') && github.actor != 'posthog-bot' && !contains(github.actor, 'github-actions') }}
@@ -640,7 +640,7 @@ jobs:
     mcp_tests:
         needs: [changes, build, unit-tests, integration-tests, handle-snapshots]
         name: MCP Tests Pass
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         if: always()
         steps:

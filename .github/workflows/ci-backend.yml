@@ -62,7 +62,7 @@ jobs:
     # Job to decide if we should run backend ci
     # See https://github.com/dorny/paths-filter#conditional-execution for more details
     changes:
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         name: Determine need to run backend and migration checks
         # Set job outputs to values from filter step
@@ -220,7 +220,7 @@ jobs:
 
     detect-snapshot-mode:
         name: Detect snapshot mode
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         needs: [changes]
         if: needs.changes.outputs.backend == 'true'
@@ -257,11 +257,11 @@ jobs:
 
     # Fast pre-job: determines which products need testing and if Django should run
     # Only needs pnpm + node — no Python, Docker, or services
-    # Runs on depot to match the product-test runner environment
+    # Runs on the same runner class as product tests.
     turbo-discover:
         needs: changes
         if: needs.changes.outputs.backend == 'true'
-        runs-on: depot-ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 20
         name: Discover product tests
         outputs:
@@ -340,7 +340,7 @@ jobs:
             needs.turbo-discover.result == 'success' &&
             needs.turbo-discover.outputs.matrix != '[]' &&
             needs.turbo-discover.outputs.matrix != ''
-        runs-on: depot-ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 30
         name: Product tests (${{ matrix.group }})
         strategy:
@@ -520,8 +520,8 @@ jobs:
         needs: [changes]
         if: needs.changes.outputs.backend == 'true'
         timeout-minutes: 10
-        name: Repo checks (depot-ubuntu-latest)
-        runs-on: depot-ubuntu-latest
+        name: Repo checks (posthog-hetzner-4)
+        runs-on: posthog-hetzner-4
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -576,7 +576,7 @@ jobs:
             checks: write
 
         name: Validate migrations and OpenAPI types
-        runs-on: depot-ubuntu-latest
+        runs-on: posthog-hetzner-4
 
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -1253,7 +1253,7 @@ jobs:
         name: Build Django matrix
         needs: [changes, get_clickhouse_versions]
         if: needs.changes.outputs.backend == 'true'
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         outputs:
             include: ${{ steps.build.outputs.include }}
@@ -1348,7 +1348,7 @@ jobs:
 
         name: Django tests – ${{ matrix.segment }}${{ matrix.compat && ' compat' || '' }} (persons-on-events ${{ matrix.person-on-events && 'on' || 'off' }}), Py ${{ matrix.python-version }}, ${{ matrix.clickhouse-server-image }} (${{matrix.group}}/${{ matrix.concurrency }})
         # Runner type is performance-critical — consult #team-devex before changing
-        runs-on: depot-ubuntu-latest
+        runs-on: posthog-hetzner-4
 
         strategy:
             fail-fast: false
@@ -1741,7 +1741,7 @@ jobs:
         name: Get ClickHouse versions
         needs: [changes]
         if: needs.changes.outputs.backend == 'true'
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         outputs:
             # Oldest supported version for main Django tests (JSON array for matrix)
@@ -1811,7 +1811,7 @@ jobs:
         # Only in UPDATE mode - CHECK mode verifies snapshots match exactly
         # Run even if some matrix jobs failed (to commit snapshots from passing jobs)
         if: ${{ always() && needs.detect-snapshot-mode.outputs.mode == 'update' && needs.changes.outputs.backend == 'true' && github.event.pull_request.head.repo.full_name == 'PostHog/posthog' }}
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         permissions:
             contents: write
@@ -1879,7 +1879,7 @@ jobs:
     django_tests:
         needs: [django, check-migrations, async-migrations, turbo-discover, turbo-tests, handle-snapshots, repo-checks]
         name: Django Tests Pass
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         if: always()
         steps:
@@ -1934,7 +1934,7 @@ jobs:
         needs: [django, turbo-tests, changes]
         name: Test selection verdict
         if: always() && github.event_name == 'pull_request'
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 10
         permissions:
             contents: read
@@ -1993,7 +1993,7 @@ jobs:
                   retention-days: 90
 
     async-migrations:
-        name: Async migrations tests -  ${{ matrix.clickhouse-server-image }} (depot-ubuntu-latest)
+        name: Async migrations tests -  ${{ matrix.clickhouse-server-image }} (posthog-hetzner-4)
         needs: [changes, turbo-discover, get_clickhouse_versions]
         strategy:
             fail-fast: false
@@ -2006,7 +2006,7 @@ jobs:
             (needs.changes.outputs.legacy == 'true' ||
              needs.turbo-discover.outputs.run_legacy == 'true' ||
              (needs.turbo-discover.result != 'success' && needs.turbo-discover.result != 'skipped'))
-        runs-on: depot-ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 30
         steps:
             - name: 'Checkout repo'
@@ -2101,7 +2101,7 @@ jobs:
     calculate-running-time:
         name: Calculate running time
         needs: [django_tests, async-migrations]
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         if: # Run on pull requests to PostHog/posthog + on PostHog/posthog outside of PRs - but never on forks or Dependabot (no secrets access)
             always() && github.actor != 'dependabot[bot]' && (
@@ -2125,7 +2125,7 @@ jobs:
                   capture-job-durations: true
                   github-token: ${{ steps.telemetry-app-token.outputs.token }}
                   status-job: 'Django Tests Pass'
-                  runner: 'depot'
+                  runner: 'posthog-hetzner-4'
             - name: Capture running time to DevEx PostHog
               if: github.run_attempt == '1'
               continue-on-error: true
@@ -2137,12 +2137,12 @@ jobs:
                   capture-job-durations: true
                   github-token: ${{ steps.telemetry-app-token.outputs.token }}
                   status-job: 'Django Tests Pass'
-                  runner: 'depot'
+                  runner: 'posthog-hetzner-4'
 
     report-test-timings:
         name: Report per-test traces
         needs: [django_tests]
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         continue-on-error: true
         timeout-minutes: 10
         # Master pushes always; PRs only when labelled `capture-test-timings`. Skip forks (no secrets access).

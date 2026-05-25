@@ -46,7 +46,7 @@ jobs:
 
     deploy:
         name: deploy ${{ matrix.release }}
-        runs-on: ubuntu-24.04
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         needs: build-images
         if: github.ref == 'refs/heads/master'

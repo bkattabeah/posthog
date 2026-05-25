@@ -64,7 +64,7 @@ concurrency:
 
 jobs:
     changes:
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         # Run on master push, manual dispatch, and on internal-repo PRs. Skip the
         # entire workflow when the only thing that changed is some other label (avoids
@@ -191,7 +191,7 @@ jobs:
               needs.changes.outputs.shouldSuggest == 'true' ||
               needs.changes.outputs.shouldRun == 'true'
             )
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         permissions:
             pull-requests: write
@@ -253,10 +253,10 @@ jobs:
         name: Playwright E2E tests
         needs: [changes]
         if: needs.changes.outputs.shouldRun == 'true'
-        # 8-core depot: 18% avg / 30% peak memory observed on 16-core runs (#46853 noted
+        # Previously 18% avg / 30% peak memory observed on 16-core runs (#46853 noted
         # the workload "is not resource constrained" even after sharding was removed).
         # Talk to #team-devex before changing.
-        runs-on: depot-ubuntu-latest-8
+        runs-on: posthog-hetzner-4
         timeout-minutes: 45
         outputs:
             vr_run_id: ${{ steps.vr-create.outputs.run_id }}
@@ -802,7 +802,7 @@ jobs:
 
     capture-run-time:
         name: Capture run time
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         needs: [changes, playwright, playwright_tests]
         if: # Run on pull requests to PostHog/posthog + on PostHog/posthog outside of PRs - but never on forks or Dependabot (no secrets access)
@@ -828,7 +828,7 @@ jobs:
                   capture-job-durations: true
                   github-token: ${{ steps.telemetry-app-token.outputs.token }}
                   status-job: 'Playwright tests pass'
-                  runner: 'depot'
+                  runner: 'posthog-hetzner-4'
             - name: Capture running time to DevEx PostHog
               if: github.run_attempt == '1'
               continue-on-error: true
@@ -840,11 +840,11 @@ jobs:
                   capture-job-durations: true
                   github-token: ${{ steps.telemetry-app-token.outputs.token }}
                   status-job: 'Playwright tests pass'
-                  runner: 'depot'
+                  runner: 'posthog-hetzner-4'
 
     vr-complete:
         name: Complete Visual Review run
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 15
         needs: [playwright]
         if: needs.playwright.outputs.vr_run_id != '' && needs.playwright.result == 'success'
@@ -881,7 +881,7 @@ jobs:
     playwright_tests:
         needs: [playwright, vr-complete]
         name: Playwright tests pass
-        runs-on: ubuntu-latest
+        runs-on: posthog-hetzner-4
         timeout-minutes: 5
         if: always()
         steps:
