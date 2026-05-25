@@ -14,12 +14,12 @@ export type {
 export type { ValueLabelsConfig } from './charts/utils/use-value-labels'
 export { TimeSeriesBarChart } from './charts/TimeSeriesBarChart/TimeSeriesBarChart'
 export type { TimeSeriesBarChartConfig, TimeSeriesBarChartProps } from './charts/TimeSeriesBarChart/TimeSeriesBarChart'
-export { SparklineSummary } from './charts/SparklineSummary/SparklineSummary'
-export type { SparklineSummaryProps } from './charts/SparklineSummary/SparklineSummary'
 export { Sparkline } from './charts/Sparkline/Sparkline'
 export type { SparklineProps } from './charts/Sparkline/Sparkline'
-export { MetricTile } from './charts/MetricTile/MetricTile'
-export type { ChangeColor, MetricTileChange, MetricTileProps } from './charts/MetricTile/MetricTile'
+export { MetricTile } from './components/MetricTile/MetricTile'
+export type { ChangeColor, MetricTileChange, MetricTileProps } from './components/MetricTile/MetricTile'
+export { SparklineSummary } from './components/SparklineSummary/SparklineSummary'
+export type { SparklineSummaryProps } from './components/SparklineSummary/SparklineSummary'
 
 // Base chart (for building new chart types)
 export { Chart } from './core/Chart'

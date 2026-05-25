@@ -24,6 +24,7 @@ export const Default: Story = {
                         labels={MONTHS}
                         theme={theme}
                         color="#22d3ee"
+                        chartClassName="mt-4 -mx-5 -mb-5"
                         formatValue={(v) => `US$${Math.round(v).toLocaleString()}`}
                     />
                 </div>
@@ -44,6 +45,7 @@ export const Falling: Story = {
                         labels={MONTHS}
                         theme={theme}
                         color="#fb7185"
+                        chartClassName="mt-4 -mx-5 -mb-5"
                         formatValue={(v) => Math.round(v).toLocaleString()}
                     />
                 </div>
@@ -65,6 +67,7 @@ export const NoChange: Story = {
                         theme={theme}
                         color="#22d3ee"
                         showChange={false}
+                        chartClassName="mt-4 -mx-5 -mb-5"
                         formatValue={(v) => Math.round(v).toLocaleString()}
                     />
                 </div>

@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react'
 
+import { Sparkline } from '../../charts/Sparkline/Sparkline'
 import { ChartErrorBoundary } from '../../core/ChartErrorBoundary'
 import type { ChartTheme } from '../../core/types'
 import { percentage } from '../../utils/format'
 import { type ChangeColor, MetricTile, type MetricTileChange } from '../MetricTile/MetricTile'
-import { Sparkline } from '../Sparkline/Sparkline'
 import { useTweenNumber } from './useTweenNumber'
 
 export type { ChangeColor } from '../MetricTile/MetricTile'
