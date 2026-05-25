@@ -114,4 +114,88 @@ describe('SparklineSummary', () => {
         expect(container.textContent).toContain('$200')
         expect(container.textContent).toContain('Feb')
     })
+
+    it('headlines the supplied `value` at rest while the chart still draws from `data`', () => {
+        const { container, chart } = renderHogChart(
+            <SparklineSummary
+                title="Revenue"
+                data={[100, 200, 300, 400]}
+                labels={LABELS}
+                theme={THEME}
+                animationMs={0}
+                value={9999}
+                formatValue={(v) => `$${Math.round(v)}`}
+            />
+        )
+        // Resting headline reflects the aggregate, not the last data point.
+        expect(container.textContent).toContain('$9999')
+        // Sparkline still rendered.
+        expect(container.querySelector('canvas')).not.toBeNull()
+        // Hover swaps to data[hoverIndex] — the supplied value only governs the resting state.
+        chart.hoverAtIndex(2)
+        expect(container.textContent).toContain('$300')
+    })
+
+    it('renders a supplied `change` pill fixed across hover', () => {
+        const { container, chart } = renderHogChart(
+            <SparklineSummary
+                title="Revenue"
+                data={[100, 200, 300, 400]}
+                labels={LABELS}
+                theme={THEME}
+                animationMs={0}
+                change={{ value: 12.5, label: '+12.5% vs. last week' }}
+                formatValue={(v) => `$${Math.round(v)}`}
+            />
+        )
+        expect(container.textContent).toContain('+12.5% vs. last week')
+        // Hover does not mutate the supplied pill.
+        chart.hoverAtIndex(0)
+        expect(container.textContent).toContain('+12.5% vs. last week')
+        // Fallback first-non-zero text should never appear when `change` is supplied.
+        expect(container.textContent).not.toContain('+300.0%')
+    })
+
+    it('formats a supplied `change` via `formatChange` when no label is provided', () => {
+        const { container } = renderHogChart(
+            <SparklineSummary
+                title="Revenue"
+                data={[100, 200, 300, 400]}
+                labels={LABELS}
+                theme={THEME}
+                animationMs={0}
+                change={{ value: -8 }}
+            />
+        )
+        expect(container.textContent).toContain('-8.0%')
+    })
+
+    it('suppresses the pill when change is null', () => {
+        const { container } = renderHogChart(
+            <SparklineSummary
+                title="Revenue"
+                data={[100, 200, 300, 400]}
+                labels={LABELS}
+                theme={THEME}
+                animationMs={0}
+                change={null}
+            />
+        )
+        expect(container.textContent).not.toContain('%')
+    })
+
+    it('uses the supplied subtitle in place of the hover-driven label', () => {
+        const { container } = renderHogChart(
+            <SparklineSummary
+                title="Revenue"
+                data={[100, 200, 300, 400]}
+                labels={LABELS}
+                theme={THEME}
+                animationMs={0}
+                subtitle="Last 12 months"
+            />
+        )
+        expect(container.textContent).toContain('Last 12 months')
+        expect(container.textContent).not.toContain('Apr')
+    })
 })

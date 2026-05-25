@@ -72,11 +72,21 @@ function GoalLine() {
 </LineChart>
 ```
 
-## SparklineSummary
+## MetricTile, Sparkline, and SparklineSummary
 
-A card-style summary that pairs a big formatted value with a sparkline. Hover
-moves the value/label/change pill to the hovered point; the headline number
-tweens between values.
+Three layers compose into the metric tile.
+
+- `MetricTile` — presentational card (title, big value, optional comparison
+  pill, subtitle, and a viz slot). No state, no chart imports. Drop in any
+  pre-resolved headline and an optional `delta`; omit the children to get a
+  number-only tile.
+- `Sparkline` — axis-less line+area preset over `LineChart`. Exposes
+  `onHoverIndexChange` so consumers can drive a hover-following headline
+  without subscribing to `useChartHover` directly.
+- `SparklineSummary` — `MetricTile` + `Sparkline` wired together. Owns the
+  hover state and the headline tween. Supports a resting `value` override and
+  a fixed `change` pill for consumers whose aggregate doesn't match
+  `data[last]`.
 
 ```tsx
 import { SparklineSummary } from 'lib/hog-charts'
@@ -89,9 +99,10 @@ import { SparklineSummary } from 'lib/hog-charts'
 />
 ```
 
-The change pill compares the current point to the first non-zero value in the
-series. Pass `showChange={false}` to hide it, or `formatChange` to customize
-the percentage label.
+When omitted, the change pill compares the current point to the first
+non-zero value in the series. Pass `showChange={false}` to hide it,
+`formatChange` to customize the percentage label, or `change={{ value, label }}`
+to supply a fixed comparison that doesn't update on hover.
 
 ## More
 
