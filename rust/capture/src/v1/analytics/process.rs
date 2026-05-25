@@ -26,6 +26,12 @@ use crate::v1::sinks::Destination;
 use crate::v1::Error;
 
 /// Maps event name to its Kafka destination, mirroring legacy DataType assignment.
+///
+/// Unlike legacy capture, v1 does NOT split heatmap/scroll-depth properties out of
+/// non-$$heatmap events (e.g. $pageview) into a synthetic redirect. We keep properties
+/// as opaque RawValue to avoid deserialization. The Node.js events subpipeline
+/// (extractHeatmapDataStep) handles extraction when `skip_heatmap_processing` is unset
+/// in Kafka headers — removing that fallback would break scroll-depth heatmaps for v1.
 fn destination_for_event_name(name: &str) -> Destination {
     match name {
         "$exception" => Destination::ExceptionErrorTracking,
