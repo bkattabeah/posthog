@@ -177,6 +177,9 @@ export interface ChartConfig {
     /** True for BarChart `barLayout: 'percent'` / LineChart `percentStackView`. Surfaced
      *  on layout context so overlays can default to a percent formatter. */
     isPercent?: boolean
+    /** Per-side overrides applied on top of the computed chart margins. Useful for sparklines
+     *  that want the plot area flush with the canvas edges (e.g. `{ left: 0, right: 0, top: 0, bottom: 0 }`). */
+    margins?: Partial<ChartMargins>
 }
 
 export interface TooltipConfig {

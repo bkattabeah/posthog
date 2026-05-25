@@ -23,6 +23,11 @@ export interface SparklineSummaryProps {
     /** Colors for the change pill when the value rose vs. fell. */
     positiveColor?: ChangeColor
     negativeColor?: ChangeColor
+    /** Peak opacity of the gradient fill under the line (0–1). Defaults to 0.35. */
+    fillOpacity?: number
+    /** Class applied to the chart container — useful for removing the default top margin
+     *  when the chart should bleed to the card edges. Defaults to `mt-4`. */
+    chartClassName?: string
     animationMs?: number
     className?: string
     dataAttr?: string
@@ -48,6 +53,7 @@ const SPARKLINE_CONFIG: LineChartConfig = {
     hideYAxis: true,
     showCrosshair: true,
     tooltip: { enabled: false },
+    margins: { top: 0, right: 0, bottom: 0, left: 0 },
 }
 
 export function SparklineSummary(props: SparklineSummaryProps): React.ReactElement {
@@ -71,6 +77,8 @@ function SparklineSummaryInner({
     showChange = true,
     positiveColor = DEFAULT_POSITIVE_COLOR,
     negativeColor = DEFAULT_NEGATIVE_COLOR,
+    fillOpacity = 0.35,
+    chartClassName = 'mt-4',
     animationMs = 350,
     className,
     dataAttr,
@@ -88,10 +96,10 @@ function SparklineSummaryInner({
                 label: seriesLabel,
                 data,
                 color: resolvedColor,
-                fill: { gradient: true, opacity: 0.35 },
+                fill: { gradient: true, opacity: fillOpacity },
             },
         ],
-        [data, resolvedColor, seriesLabel]
+        [data, resolvedColor, seriesLabel, fillOpacity]
     )
 
     const rawValue = data[activeIndex] ?? 0
@@ -122,7 +130,7 @@ function SparklineSummaryInner({
 
             <div className="mt-1 text-sm opacity-60">{labels[activeIndex] ?? ' '}</div>
 
-            <div className="relative mt-4 flex flex-col" style={{ height: chartHeight }}>
+            <div className={`relative flex flex-col ${chartClassName}`} style={{ height: chartHeight }}>
                 <LineChart series={series} labels={labels} theme={theme} config={SPARKLINE_CONFIG}>
                     <HoverWatcher onHoverChange={setHoverIndex} />
                 </LineChart>
