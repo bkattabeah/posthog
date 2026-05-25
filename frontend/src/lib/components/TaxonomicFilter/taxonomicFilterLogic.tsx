@@ -87,6 +87,7 @@ import { HogFlowTaxonomicFilters } from 'products/workflows/frontend/Workflows/h
 import { PROPERTY_FILTER_TYPE_TO_TAXONOMIC_FILTER_GROUP_TYPE } from '../PropertyFilters/utils'
 import { apmTaxonomicGroupsLogic } from './apmTaxonomicGroupsLogic'
 import { cohortTaxonomicGroupsLogic } from './cohortTaxonomicGroupsLogic'
+import { errorTrackingTaxonomicGroupsLogic } from './errorTrackingTaxonomicGroupsLogic'
 import { eventMetadataTaxonomicGroupsLogic } from './eventMetadataTaxonomicGroupsLogic'
 import { groupAnalyticsTaxonomicGroupsLogic } from './groupAnalyticsTaxonomicGroupsLogic'
 import { hogQLExpressionTaxonomicGroupsLogic } from './hogQLExpressionTaxonomicGroupsLogic'
@@ -336,6 +337,8 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
             ['replayTaxonomicGroups'],
             posthogResourcesTaxonomicGroupsLogic,
             ['posthogResourcesTaxonomicGroups'],
+            errorTrackingTaxonomicGroupsLogic,
+            ['errorTrackingTaxonomicGroups'],
         ],
         actions: [primaryEventPropertiesModel, ['ensureLoadedForEvents']],
     })),
@@ -550,6 +553,7 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
                 s.recentPinnedTaxonomicGroups,
                 s.replayTaxonomicGroups,
                 s.posthogResourcesTaxonomicGroups,
+                s.errorTrackingTaxonomicGroups,
             ],
             (
                 currentTeam: TeamType,
@@ -572,7 +576,8 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
                 featureFlags: Record<string, boolean | string | undefined>,
                 recentPinnedTaxonomicGroups: TaxonomicFilterGroup[],
                 replayTaxonomicGroups: TaxonomicFilterGroup[],
-                posthogResourcesTaxonomicGroups: TaxonomicFilterGroup[]
+                posthogResourcesTaxonomicGroups: TaxonomicFilterGroup[],
+                errorTrackingTaxonomicGroups: TaxonomicFilterGroup[]
             ): TaxonomicFilterGroup[] => {
                 const { eventNames } = eventNamesWithPrimaryProperties
                 const { id: teamId } = currentTeam
@@ -809,48 +814,7 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
                             excludedProperties?.[TaxonomicFilterGroupType.EventFeatureFlags]?.filter(isString),
                         ...propertyTaxonomicGroupProps(),
                     },
-                    {
-                        name: 'Issues',
-                        searchPlaceholder: 'issues',
-                        type: TaxonomicFilterGroupType.ErrorTrackingIssues,
-                        options: Object.entries(
-                            CORE_FILTER_DEFINITIONS_BY_GROUP[TaxonomicFilterGroupType.ErrorTrackingIssues]
-                        )
-                            .map(([key, { label }]) => ({
-                                value: key,
-                                name: label,
-                            }))
-                            .filter(
-                                (o) =>
-                                    !excludedProperties[TaxonomicFilterGroupType.ErrorTrackingIssues]?.includes(o.value)
-                            ),
-                        getName: (option) => option.name,
-                        getValue: (option) => option.value,
-                        valuesEndpoint: (key) =>
-                            `api/environments/${projectId}/error_tracking/issues/values?key=` + key,
-                        getPopoverHeader: () => 'Issues',
-                    },
-                    {
-                        name: 'Exception properties',
-                        searchPlaceholder: 'exceptions',
-                        type: TaxonomicFilterGroupType.ErrorTrackingProperties,
-                        options: [
-                            ...getProductEventPropertyFilterOptions('error-tracking').map((value) => ({
-                                name: value,
-                                value,
-                                group: TaxonomicFilterGroupType.EventProperties,
-                            })),
-                            ...(currentTeam?.person_display_name_properties
-                                ? currentTeam.person_display_name_properties.map((property) => ({
-                                      name: property,
-                                      value: property,
-                                      group: TaxonomicFilterGroupType.PersonProperties,
-                                  }))
-                                : []),
-                        ],
-                        getIcon: getPropertyDefinitionIcon,
-                        getPopoverHeader: () => 'Exception properties',
-                    },
+                    ...errorTrackingTaxonomicGroups,
                     {
                         name: 'Revenue analytics properties',
                         searchPlaceholder: 'revenue analytics properties',
