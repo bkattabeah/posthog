@@ -53,7 +53,6 @@ import { getPrimaryPropertyForEvent } from 'lib/utils/primaryEventProperty'
 import {
     getEventDefinitionIcon,
     getPropertyDefinitionIcon,
-    getRevenueAnalyticsDefinitionIcon,
 } from 'scenes/data-management/events/DefinitionHeader'
 import { dataWarehouseSettingsSceneLogic } from 'scenes/data-warehouse/settings/dataWarehouseSettingsSceneLogic'
 import {
@@ -77,7 +76,6 @@ import {
     PersonProperty,
     PersonType,
     PropertyDefinition,
-    PropertyDefinitionType,
     TeamType,
 } from '~/types'
 
@@ -95,6 +93,7 @@ import { maxAIContextTaxonomicGroupsLogic } from './maxAIContextTaxonomicGroupsL
 import { posthogResourcesTaxonomicGroupsLogic } from './posthogResourcesTaxonomicGroupsLogic'
 import { recentPinnedTaxonomicGroupsLogic } from './recentPinnedTaxonomicGroupsLogic'
 import { replayTaxonomicGroupsLogic } from './replayTaxonomicGroupsLogic'
+import { revenueAnalyticsTaxonomicGroupsLogic } from './revenueAnalyticsTaxonomicGroupsLogic'
 import { suggestedFiltersTaxonomicGroupsLogic } from './suggestedFiltersTaxonomicGroupsLogic'
 import type { taxonomicFilterLogicType } from './taxonomicFilterLogicType'
 
@@ -339,6 +338,8 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
             ['posthogResourcesTaxonomicGroups'],
             errorTrackingTaxonomicGroupsLogic,
             ['errorTrackingTaxonomicGroups'],
+            revenueAnalyticsTaxonomicGroupsLogic,
+            ['revenueAnalyticsTaxonomicGroups'],
         ],
         actions: [primaryEventPropertiesModel, ['ensureLoadedForEvents']],
     })),
@@ -554,6 +555,7 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
                 s.replayTaxonomicGroups,
                 s.posthogResourcesTaxonomicGroups,
                 s.errorTrackingTaxonomicGroups,
+                s.revenueAnalyticsTaxonomicGroups,
             ],
             (
                 currentTeam: TeamType,
@@ -577,7 +579,8 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
                 recentPinnedTaxonomicGroups: TaxonomicFilterGroup[],
                 replayTaxonomicGroups: TaxonomicFilterGroup[],
                 posthogResourcesTaxonomicGroups: TaxonomicFilterGroup[],
-                errorTrackingTaxonomicGroups: TaxonomicFilterGroup[]
+                errorTrackingTaxonomicGroups: TaxonomicFilterGroup[],
+                revenueAnalyticsTaxonomicGroups: TaxonomicFilterGroup[]
             ): TaxonomicFilterGroup[] => {
                 const { eventNames } = eventNamesWithPrimaryProperties
                 const { id: teamId } = currentTeam
@@ -815,43 +818,7 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
                         ...propertyTaxonomicGroupProps(),
                     },
                     ...errorTrackingTaxonomicGroups,
-                    {
-                        name: 'Revenue analytics properties',
-                        searchPlaceholder: 'revenue analytics properties',
-                        type: TaxonomicFilterGroupType.RevenueAnalyticsProperties,
-                        options: Object.entries(
-                            CORE_FILTER_DEFINITIONS_BY_GROUP[TaxonomicFilterGroupType.RevenueAnalyticsProperties]
-                        )
-                            .map(([key, { type: property_type }]) => ({
-                                id: key,
-                                name: key,
-                                value: key,
-                                property_type,
-                                type: PropertyDefinitionType.RevenueAnalytics,
-                            }))
-                            .filter(
-                                (o) =>
-                                    !excludedProperties[TaxonomicFilterGroupType.RevenueAnalyticsProperties]?.includes(
-                                        o.value
-                                    )
-                            ),
-                        getIcon: (option: PropertyDefinition): JSX.Element => getRevenueAnalyticsDefinitionIcon(option),
-                        getName: (option: PropertyDefinition) => {
-                            const coreDefinition = getCoreFilterDefinition(
-                                option.id,
-                                TaxonomicFilterGroupType.RevenueAnalyticsProperties
-                            )
-
-                            return coreDefinition ? coreDefinition.label : option.name
-                        },
-                        getValue: (option: PropertyDefinition) => option.id,
-                        valuesEndpoint: (key) => {
-                            return `api/environments/${projectId}/revenue_analytics/taxonomy/values?key=${encodeURIComponent(
-                                key
-                            )}`
-                        },
-                        getPopoverHeader: () => 'Revenue analytics properties',
-                    },
+                    ...revenueAnalyticsTaxonomicGroups,
                     ...apmTaxonomicGroups,
                     {
                         name: 'Numerical event properties',
