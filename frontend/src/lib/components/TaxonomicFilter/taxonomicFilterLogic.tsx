@@ -76,6 +76,7 @@ import { HogFlowTaxonomicFilters } from 'products/workflows/frontend/Workflows/h
 import { PROPERTY_FILTER_TYPE_TO_TAXONOMIC_FILTER_GROUP_TYPE } from '../PropertyFilters/utils'
 import { apmTaxonomicGroupsLogic } from './apmTaxonomicGroupsLogic'
 import { cohortTaxonomicGroupsLogic } from './cohortTaxonomicGroupsLogic'
+import { customEventsTaxonomicGroupsLogic } from './customEventsTaxonomicGroupsLogic'
 import { dataWarehouseTaxonomicGroupsLogic } from './dataWarehouseTaxonomicGroupsLogic'
 import { errorTrackingTaxonomicGroupsLogic } from './errorTrackingTaxonomicGroupsLogic'
 import { eventMetadataTaxonomicGroupsLogic } from './eventMetadataTaxonomicGroupsLogic'
@@ -336,6 +337,8 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
             ['shortcutValueTaxonomicGroups'],
             eventsTaxonomicGroupsLogic,
             ['eventsTaxonomicGroups'],
+            customEventsTaxonomicGroupsLogic,
+            ['customEventsTaxonomicGroups'],
         ],
         actions: [primaryEventPropertiesModel, ['ensureLoadedForEvents']],
     })),
@@ -552,6 +555,7 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
                 s.revenueAnalyticsTaxonomicGroups,
                 s.shortcutValueTaxonomicGroups,
                 s.eventsTaxonomicGroups,
+                s.customEventsTaxonomicGroups,
             ],
             (
                 currentTeam: TeamType,
@@ -577,7 +581,8 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
                 errorTrackingTaxonomicGroups: TaxonomicFilterGroup[],
                 revenueAnalyticsTaxonomicGroups: TaxonomicFilterGroup[],
                 shortcutValueTaxonomicGroups: TaxonomicFilterGroup[],
-                eventsTaxonomicGroups: TaxonomicFilterGroup[]
+                eventsTaxonomicGroups: TaxonomicFilterGroup[],
+                customEventsTaxonomicGroups: TaxonomicFilterGroup[]
             ): TaxonomicFilterGroup[] => {
                 const { eventNames } = eventNamesWithPrimaryProperties
                 const { id: teamId } = currentTeam
@@ -772,30 +777,7 @@ export const taxonomicFilterLogic = kea<taxonomicFilterLogicType>([
                     },
                     ...cohortTaxonomicGroups,
                     ...shortcutValueTaxonomicGroups,
-                    {
-                        name: 'Autocapture events',
-                        searchPlaceholder: 'autocapture events',
-                        type: TaxonomicFilterGroupType.AutocaptureEvents,
-                        endpoint: `api/environments/${teamId}/events/values/?key=$el_text&event_name=$autocapture`,
-                        searchAlias: 'value',
-                        getName: (option: SimpleOption) => option.name,
-                        getValue: (option: SimpleOption) => option.name,
-                        getPopoverHeader: () => `Autocapture event`,
-                        minSearchQueryLength: 3,
-                        searchDescription: 'element text seen on autocapture events',
-                    },
-                    {
-                        name: 'Custom Events',
-                        searchPlaceholder: 'custom events',
-                        type: TaxonomicFilterGroupType.CustomEvents,
-                        endpoint: combineUrl(`api/projects/${projectId}/event_definitions`, {
-                            event_type: EventDefinitionType.EventCustom,
-                            exclude_hidden: true,
-                        }).url,
-                        getName: (eventDefinition: EventDefinition) => eventDefinition.name,
-                        getValue: (eventDefinition: EventDefinition) => eventDefinition.name,
-                        ...eventTaxonomicGroupProps,
-                    },
+                    ...customEventsTaxonomicGroups,
                     {
                         name: 'Wildcards',
                         searchPlaceholder: 'wildcards',
